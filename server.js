@@ -105,6 +105,22 @@ app.get("/", (req, res) => {
   res.send("API 3QRIS SQLite jalan 🚀");
 });
 
+const PORT = process.env.PORT || 5000;
+
+const path = require("path");
+
+// serve file static (HTML, CSS, JS)
+app.use(express.static(__dirname));
+
+// fallback ke index.html
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
+app.listen(PORT, () => {
+  console.log("Server jalan di port " + PORT);
+});
+
 // ==========================
 // 🔥 RUN SERVER
 // ==========================
