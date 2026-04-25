@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3QRIS Kasir</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117; --card: #181c27; --card2: #1e2333; --border: #2a2f42;
+      --accent: #3b82f6; --accent-g: #60a5fa; --green: #22c55e;
+      --yellow: #eab308; --text: #f0f2f8; --muted: #64748b; --radius: 16px;
+    }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── SETUP ── */
+    #setup-screen {
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; padding: 24px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(59,130,246,0.12) 0%, transparent 60%);
+    }
+    .setup-box { width: 100%; max-width: 520px; background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 40px; }
+    .brand { font-size: 28px; font-weight: 800; letter-spacing: -1px; margin-bottom: 6px; }
+    .brand span { color: var(--accent); }
+    .setup-desc { font-size: 14px; color: var(--muted); margin-bottom: 32px; line-height: 1.6; }
+    .field-label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px; }
+    .upload-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 32px 16px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--card2); position: relative; margin-bottom: 20px; }
+    .upload-zone:hover { border-color: var(--accent); background: rgba(59,130,246,0.06); }
+    .upload-zone.drag-over { border-color: var(--accent) !important; background: rgba(59,130,246,0.12) !important; transform: scale(1.01); }
+    .upload-zone input { display: none; }
+    .upload-icon { font-size: 32px; margin-bottom: 8px; }
+    .upload-zone p { font-size: 13px; color: var(--muted); }
+    .upload-zone strong { display: block; font-size: 14px; color: var(--text); margin-bottom: 4px; }
+    .scan-status { display: none; align-items: center; gap: 8px; font-size: 13px; padding: 10px 14px; border-radius: 8px; margin-top: 12px; font-weight: 500; }
+    .scan-status.scanning { display: flex; background: rgba(59,130,246,0.1); color: #93c5fd; border: 1px solid rgba(59,130,246,0.2); }
+    .scan-status.ok   { display: flex; background: rgba(34,197,94,0.1);  color: #86efac; border: 1px solid rgba(34,197,94,0.2); }
+    .scan-status.fail { display: flex; background: rgba(239,68,68,0.1);  color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+    .divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; font-size: 11px; color: var(--muted); font-weight: 600; letter-spacing: 0.5px; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    textarea.qris-input { width: 100%; background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent-g); resize: none; height: 72px; outline: none; transition: border-color 0.2s; margin-bottom: 24px; }
+    textarea.qris-input:focus { border-color: var(--accent); }
+    .products-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .product-row { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .product-row input { background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; font-size: 13px; color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; outline: none; transition: border-color 0.2s; width: 100%; }
+    .product-row input:focus { border-color: var(--accent); }
+    .product-row input.price { font-family: 'JetBrains Mono', monospace; font-size: 12px; width: 110px; }
+    .btn-icon { width: 34px; height: 34px; border: 1px solid var(--border); border-radius: 8px; background: var(--card2); color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; transition: all 0.2s; flex-shrink: 0; }
+    .btn-icon:hover { border-color: #ef4444; color: #ef4444; }
+    .btn-add { font-size: 12px; color: var(--accent); background: none; border: 1px dashed rgba(59,130,246,0.4); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; transition: all 0.2s; }
+    .btn-add:hover { background: rgba(59,130,246,0.08); }
+    .btn-start { width: 100%; margin-top: 28px; padding: 15px; background: linear-gradient(135deg, var(--accent), #6366f1); color: #fff; border: none; border-radius: 12px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; transition: opacity 0.2s, transform 0.1s; }
+    .btn-start:hover { opacity: 0.92; transform: translateY(-1px); }
+    .err-msg { display: none; font-size: 12px; color: #fca5a5; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); border-radius: 8px; padding: 10px 12px; margin-top: 12px; }
+
+    /* ── KASIR ── */
+    #kasir-screen { display: none; min-height: 100vh; flex-direction: column; }
+    .topbar { background: var(--card); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+    .topbar-brand { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+    .topbar-brand span { color: var(--accent); }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .btn-settings { font-size: 12px; font-weight: 600; padding: 7px 14px; background: var(--card2); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.2s; }
+    .btn-settings:hover { color: var(--text); border-color: var(--accent); }
+    .kasir-body { flex: 1; max-width: 960px; margin: 0 auto; padding: 32px 24px; width: 100%; }
+    .kasir-title { font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 16px; }
+    .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 40px; }
+    .product-card { background: var(--card); border: 2px solid var(--border); border-radius: var(--radius); padding: 22px 18px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; user-select: none; }
+    .product-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(59,130,246,0.08), transparent); opacity: 0; transition: opacity 0.2s; }
+    .product-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(59,130,246,0.15); }
+    .product-card:hover::before { opacity: 1; }
+    .product-card:active { transform: translateY(0); }
+    .product-card.selected { border-color: var(--accent); background: rgba(59,130,246,0.08); }
+    .product-card .tap-hint { font-size: 10px; color: var(--muted); font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 10px; }
+    .product-card .prod-name { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; line-height: 1.3; }
+    .product-card .prod-price { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 600; color: var(--accent-g); }
+    .product-card .tap-arrow { position: absolute; bottom: 14px; right: 14px; font-size: 18px; opacity: 0.2; transition: opacity 0.2s, transform 0.2s; }
+    .product-card:hover .tap-arrow { opacity: 0.7; transform: translate(2px,-2px); }
+
+    /* ══ BARU: CUSTOM NOMINAL INPUT ══ */
+    .custom-nominal-card {
+      background: var(--card); border: 2px dashed var(--border); border-radius: var(--radius);
+      padding: 22px 18px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+      display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px;
+    }
+    .custom-nominal-card:hover { border-color: var(--accent); background: rgba(59,130,246,0.06); }
+    .custom-nominal-card .icon { font-size: 24px; opacity: 0.5; }
+    .custom-nominal-card .label { font-size: 13px; font-weight: 600; color: var(--muted); }
+    .custom-nominal-card .sub { font-size: 11px; color: var(--muted); }
+
+    /* ══ BARU: MODAL NOMINAL ══ */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; padding: 24px; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 32px; max-width: 440px; width: 100%; }
+    .modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .modal p { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .btn-cancel { flex: 1; padding: 12px; background: var(--card2); border: 1px solid var(--border); border-radius: 10px; color: var(--muted); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-confirm { flex: 1; padding: 12px; background: var(--accent); border: none; border-radius: 10px; color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; }
+    .nominal-input { width: 100%; background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; font-family: 'JetBrains Mono', monospace; font-size: 20px; color: var(--green); text-align: center; outline: none; margin-bottom: 12px; }
+    .nominal-input:focus { border-color: var(--accent); }
+    .quick-nominals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+    .quick-btn { padding: 10px; background: var(--card2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.2s; }
+    .quick-btn:hover { border-color: var(--accent); background: rgba(59,130,246,0.1); }
+
+    /* ── QR PANEL ── */
+    .qr-panel { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 32px; display: flex; flex-direction: column; align-items: center; min-height: 360px; justify-content: center; }
+    .qr-empty { text-align: center; }
+    .qr-empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+    .qr-empty p { color: var(--muted); font-size: 14px; }
+    .qr-result { display: none; width: 100%; align-items: center; flex-direction: column; }
+    .qr-product-badge { font-size: 13px; font-weight: 700; padding: 6px 16px; border-radius: 99px; background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); color: var(--accent-g); margin-bottom: 20px; text-align: center; }
+    #qr-box { background: #fff; padding: 20px; border-radius: 16px; margin-bottom: 16px; display: inline-block; }
+    .qr-amount { font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 600; color: var(--green); margin-bottom: 6px; }
+    .qr-note { font-size: 12px; color: var(--muted); margin-bottom: 20px; text-align: center; }
+
+    /* ══ BARU: FEE LAYANAN ══ */
+    .fee-section { width: 100%; margin-bottom: 16px; }
+    .fee-toggle { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; cursor: pointer; }
+    .fee-toggle input { width: 18px; height: 18px; accent-color: var(--accent); }
+    .fee-toggle span { font-size: 13px; color: var(--text); font-weight: 500; }
+    .fee-options { display: none; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+    .fee-options.show { display: grid; }
+    .fee-btn { padding: 10px; background: var(--card2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.2s; text-align: center; }
+    .fee-btn:hover, .fee-btn.active { border-color: var(--accent); background: rgba(59,130,246,0.1); }
+    .fee-custom { display: none; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+    .fee-custom.show { display: grid; }
+    .fee-custom input { background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text); outline: none; }
+    .fee-custom input:focus { border-color: var(--accent); }
+    .fee-summary { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; font-size: 12px; color: var(--muted); }
+    .fee-summary .row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+    .fee-summary .row:last-child { margin-bottom: 0; padding-top: 6px; border-top: 1px solid var(--border); font-weight: 700; color: var(--green); font-size: 14px; }
+
+    /* PAYMENT LINK BOX */
+    .payment-link-box { width: 100%; margin-bottom: 16px; background: linear-gradient(135deg, rgba(234,179,8,0.08), rgba(234,179,8,0.03)); border: 1px solid rgba(234,179,8,0.3); border-radius: 14px; padding: 18px; }
+    .payment-link-label { font-size: 11px; font-weight: 700; color: var(--yellow); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+    .payment-link-desc { font-size: 12px; color: var(--muted); margin-bottom: 12px; line-height: 1.5; }
+    .link-input-row { display: flex; gap: 8px; align-items: center; }
+    .link-input-row input { flex: 1; background: var(--card2); border: 1px solid rgba(234,179,8,0.2); border-radius: 8px; padding: 9px 12px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--yellow); outline: none; min-width: 0; }
+    .btn-copy-link { padding: 9px 14px; background: rgba(234,179,8,0.12); border: 1px solid rgba(234,179,8,0.35); border-radius: 8px; color: var(--yellow); font-size: 12px; font-weight: 700; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
+    .btn-copy-link:hover { background: rgba(234,179,8,0.22); }
+    .btn-copy-link.copied { background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.35); color: var(--green); }
+    .link-hint { font-size: 11px; color: var(--muted); margin-top: 10px; line-height: 1.6; }
+    .link-hint code { font-family: 'JetBrains Mono', monospace; background: var(--card2); padding: 2px 5px; border-radius: 4px; font-size: 10px; color: var(--accent-g); }
+
+    .qr-actions { display: flex; gap: 8px; width: 100%; }
+    .btn-dl { flex: 1; padding: 11px; background: var(--card2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.2s; }
+    .btn-dl:hover { border-color: var(--accent); color: var(--accent-g); }
+    .btn-next { flex: 1; padding: 11px; background: linear-gradient(135deg, var(--green), #16a34a); border: none; border-radius: 10px; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; transition: opacity 0.2s; }
+    .btn-next:hover { opacity: 0.88; }
+    .pulse { display: none; flex-direction: column; align-items: center; gap: 12px; }
+    .pulse-ring { width: 56px; height: 56px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* TX Log */
+    .tx-log { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; margin-top: 24px; }
+    .tx-log-title { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 14px; }
+    .tx-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; animation: fadeIn 0.3s ease; }
+    .tx-item:last-child { border-bottom: none; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+    .tx-item .tx-name { font-weight: 600; color: var(--text); }
+    .tx-item .tx-time { color: var(--muted); font-size: 11px; font-family: 'JetBrains Mono', monospace; }
+    .tx-item .tx-price { font-family: 'JetBrains Mono', monospace; color: var(--green); font-weight: 600; }
+    .tx-empty { color: var(--muted); font-size: 13px; text-align: center; padding: 8px 0; }
+
+    /* ══ BARU: SOUND TOGGLE ══ */
+    .sound-toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); cursor: pointer; }
+    .sound-toggle input { accent-color: var(--accent); }
+
+    /* ══ BARU: SEARCH FILTER ══ */
+    .search-box { width: 100%; max-width: 300px; margin-bottom: 16px; }
+    .search-box input { width: 100%; background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 13px; color: var(--text); outline: none; }
+    .search-box input:focus { border-color: var(--accent); }
+    .search-box input::placeholder { color: var(--muted); }
+
+    /* ══ PAYMENT PAGE (Customer) ══ */
+    #payment-screen {
+      display: none; min-height: 100vh; align-items: center; justify-content: center;
+      padding: 24px; flex-direction: column;
+      background: radial-gradient(ellipse at 50% 20%, rgba(59,130,246,0.1) 0%, transparent 60%);
+    }
+    .payment-card { width: 100%; max-width: 400px; background: var(--card); border: 1px solid var(--border); border-radius: 28px; padding: 36px 28px; text-align: center; }
+    .pay-brand { font-size: 18px; font-weight: 800; margin-bottom: 2px; }
+    .pay-brand span { color: var(--accent); }
+    .pay-subtitle { font-size: 12px; color: var(--muted); margin-bottom: 24px; }
+    .pay-divider { height: 1px; background: var(--border); margin: 20px 0; }
+    .pay-product { font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+    .pay-amount { font-family: 'JetBrains Mono', monospace; font-size: 34px; font-weight: 700; color: var(--green); margin-bottom: 24px; }
+    #payment-qr-box { background: #fff; padding: 20px; border-radius: 18px; display: inline-block; margin-bottom: 20px; }
+    .pay-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--yellow); background: rgba(234,179,8,0.1); border: 1px solid rgba(234,179,8,0.2); padding: 6px 14px; border-radius: 99px; margin-bottom: 20px; font-weight: 600; }
+    .pay-steps { background: var(--card2); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; text-align: left; font-size: 13px; color: var(--muted); line-height: 1.8; margin-bottom: 16px; }
+    .pay-steps strong { display: block; font-size: 11px; font-weight: 700; color: var(--text); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 8px; }
+    .pay-steps ol { padding-left: 18px; }
+    .btn-pay-dl { width: 100%; padding: 13px; background: var(--card2); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.2s; margin-bottom: 12px; }
+    .btn-pay-dl:hover { border-color: var(--accent); color: var(--accent-g); }
+    .pay-footer { font-size: 11px; color: var(--muted); }
+    .pay-footer strong { color: var(--accent-g); }
+    .pay-error { text-align: center; padding: 20px 0; }
+    .pay-error .exp-icon { font-size: 48px; margin-bottom: 16px; }
+    .pay-error h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .pay-error p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+    @media (max-width: 640px) {
+      .products-grid { grid-template-columns: repeat(2, 1fr); }
+      .setup-box, .payment-card { padding: 28px 20px; }
+      .kasir-body { padding: 20px 16px; }
+      .qr-panel { padding: 24px 16px; }
+      .qr-actions { flex-direction: column; }
+      .quick-nominals { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════
+     SETUP SCREEN
+══════════════════════════════ -->
+<div id="setup-screen">
+  <div class="setup-box">
+    <div class="brand"><span>3</span>QRIS <span style="font-size:14px;font-weight:500;color:var(--muted)">Kasir</span></div>
+    <p class="setup-desc">Setup sekali, pakai selamanya. Upload QRIS statis dan atur daftar produk.</p>
+    <div class="field-label">QRIS Statis Kamu</div>
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" accept="image/*" />
+      <div class="upload-icon">📷</div>
+      <strong id="uploadLabel">Upload Gambar QRIS Statis</strong>
+      <p>Klik atau drag & drop · auto-scan langsung</p>
+    </div>
+    <div class="scan-status" id="scanStatus"></div>
+    <div class="divider">atau paste manual</div>
+    <textarea class="qris-input" id="qrisManual" placeholder="Paste QRIS string di sini... (000201...)"></textarea>
+    <div class="products-header">
+      <div class="field-label" style="margin:0">Daftar Produk / Voucher</div>
+      <button class="btn-add" onclick="addProductRow()">+ Tambah</button>
+    </div>
+    <div id="productList"></div>
+    <div class="err-msg" id="errMsg"></div>
+    <button class="btn-start" onclick="startKasir()">Buka Kasir →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     KASIR SCREEN
+══════════════════════════════ -->
+<div id="kasir-screen">
+  <div class="topbar">
+    <div class="topbar-brand"><span>3</span>QRIS Kasir</div>
+    <div class="topbar-right">
+      <div style="font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;" id="clockDisplay"></div>
+      <label class="sound-toggle">
+        <input type="checkbox" id="soundEnabled" checked />
+        <span>🔊</span>
+      </label>
+      <button class="btn-settings" onclick="openSettings()">⚙ Pengaturan</button>
+    </div>
+  </div>
+  <div class="kasir-body">
+    <div class="kasir-title">Pilih Produk — 1 Klik Generate QR</div>
+    
+    <!-- ══ BARU: SEARCH BOX ══ -->
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="🔍 Cari produk..." oninput="filterProducts()" />
+    </div>
+    
+    <div class="products-grid" id="kasirProductGrid"></div>
+    <div class="kasir-title">QR Pembayaran</div>
+    <div class="qr-panel">
+      <div class="pulse" id="qrLoading"><div class="pulse-ring"></div><div style="font-size:13px;color:var(--muted)">Generating QRIS...</div></div>
+      <div class="qr-empty" id="qrEmpty">
+        <div class="qr-empty-icon">▦</div>
+        <p>Pilih produk di atas<br>untuk generate QR pembayaran</p>
+      </div>
+      <div class="qr-result" id="qrResult">
+        <div class="qr-product-badge" id="qrProductBadge"></div>
+        <div id="qr-box"></div>
+        <div class="qr-amount" id="qrAmount"></div>
+        <div class="qr-note">Scan dengan aplikasi pembayaran · berlaku 1 transaksi</div>
+
+        <!-- ══ BARU: FEE LAYANAN ══ -->
+        <div class="fee-section">
+          <label class="fee-toggle" onclick="toggleFee()">
+            <input type="checkbox" id="feeEnabled" />
+            <span>Tambah Fee Layanan ke Customer</span>
+          </label>
+          <div class="fee-options" id="feeOptions">
+            <button class="fee-btn" onclick="setFee(500)">Rp 500</button>
+            <button class="fee-btn" onclick="setFee(1000)">Rp 1.000</button>
+            <button class="fee-btn" onclick="setFee(1500)">Rp 1.500</button>
+            <button class="fee-btn" onclick="setFee(2000)">Rp 2.000</button>
+            <button class="fee-btn" onclick="setFee(2500)">Rp 2.500</button>
+            <button class="fee-btn" onclick="showCustomFee()">Custom</button>
+          </div>
+          <div class="fee-custom" id="feeCustom">
+            <input type="number" id="feeCustomInput" placeholder="Nominal fee" onchange="applyCustomFee()" />
+            <button class="btn-confirm" style="padding:10px 16px;" onclick="applyCustomFee()">OK</button>
+          </div>
+          <div class="fee-summary" id="feeSummary" style="display:none;">
+            <div class="row"><span>Harga Produk</span><span id="feeBase">Rp 0</span></div>
+            <div class="row"><span>Fee Layanan</span><span id="feeAmount">Rp 0</span></div>
+            <div class="row"><span>Total Dibayar</span><span id="feeTotal">Rp 0</span></div>
+          </div>
+        </div>
+
+        <!-- PAYMENT LINK BOX -->
+        <div class="payment-link-box">
+          <div class="payment-link-label">🔗 Link Pembayaran untuk Website Toko</div>
+          <div class="payment-link-desc">Copy link ini → tempel ke tombol <strong style="color:var(--text)">"Beli"</strong> di website tokomu. Customer klik tombol → langsung muncul halaman QRIS siap scan.</div>
+          <div class="link-input-row">
+            <input type="text" id="paymentLinkInput" readonly />
+            <button class="btn-copy-link" id="btnCopyLink" onclick="copyPaymentLink()">📋 Copy</button>
+          </div>
+          <div class="link-hint">
+            Contoh di HTML toko: <code>&lt;a href="LINK" target="_blank"&gt;Beli Sekarang&lt;/a&gt;</code>
+          </div>
+        </div>
+
+        <div class="qr-actions">
+          <button class="btn-dl" onclick="downloadQR()">⬇ Download QR</button>
+          <button class="btn-next" onclick="nextTransaction()">✓ Transaksi Berikutnya</button>
+        </div>
+      </div>
+    </div>
+    <div class="tx-log">
+      <div class="tx-log-title">Riwayat Transaksi Hari Ini</div>
+      <div id="txList"><div class="tx-empty">Belum ada transaksi</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     PAYMENT PAGE (Customer)
+══════════════════════════════ -->
+<div id="payment-screen">
+  <div class="payment-card">
+    <div class="pay-brand"><span>3</span>QRIS</div>
+    <div class="pay-subtitle">Halaman Pembayaran</div>
+    <div id="paymentContent">
+      <div class="pay-product" id="payProductName"></div>
+      <div class="pay-amount" id="payAmountDisplay"></div>
+      <div class="pay-badge">⏱ Berlaku untuk 1 transaksi</div>
+      <div id="payment-qr-box"></div>
+      <div class="pay-steps">
+        <strong>Cara Bayar:</strong>
+        <ol>
+          <li>Buka aplikasi DANA, GoPay, OVO, atau m-Banking</li>
+          <li>Pilih menu <strong>Scan QR</strong> atau <strong>Bayar</strong></li>
+          <li>Arahkan kamera ke QR di atas</li>
+          <li>Konfirmasi nominal &amp; kirim</li>
+        </ol>
+      </div>
+      <button class="btn-pay-dl" onclick="downloadPaymentQR()">⬇ Simpan Gambar QR</button>
+    </div>
+    <div class="pay-footer">Powered by <strong>3QRIS</strong></div>
+  </div>
+</div>
+
+<!-- Modal Nominal Custom -->
+<div class="modal-overlay" id="nominalModal">
+  <div class="modal">
+    <h3>Nominal Custom</h3>
+    <p>Masukkan jumlah yang ingin ditagih.</p>
+    <div class="quick-nominals">
+      <button class="quick-btn" onclick="setQuickNominal(10000)">10rb</button>
+      <button class="quick-btn" onclick="setQuickNominal(25000)">25rb</button>
+      <button class="quick-btn" onclick="setQuickNominal(50000)">50rb</button>
+      <button class="quick-btn" onclick="setQuickNominal(100000)">100rb</button>
+      <button class="quick-btn" onclick="setQuickNominal(150000)">150rb</button>
+      <button class="quick-btn" onclick="setQuickNominal(200000)">200rb</button>
+    </div>
+    <input type="number" class="nominal-input" id="customNominalInput" placeholder="0" onkeydown="if(event.key==='Enter')confirmCustomNominal()" />
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeNominalModal()">Batal</button>
+      <button class="btn-confirm" onclick="confirmCustomNominal()">Generate QR</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Settings -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <h3>Setting</h3>
+    <p>Ubah QRIS statis atau daftar produk kamu.</p>
+    <div style="font-size:13px;color:var(--muted);background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px;">
+      Kamu akan dibawa ke halaman setup.
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeSettings()">Batal</button>
+      <button class="btn-confirm" onclick="goSetup()">Ke Halaman Setup</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_URL = "http://localhost:5000";
+let config = { qrisString: '', products: [] };
+let transactions = [], currentProduct = null, currentFee = 0, currentTotal = 0;
+
+const DEFAULT_PRODUCTS = [
+  { name: 'Voucher 1 Hari',  price: 6500 },
+  { name: 'Voucher 3 Hari',  price: 17000 },
+  { name: 'Voucher 7 Hari',  price: 35000 },
+  { name: 'Voucher 14 Hari', price: 68000 },
+  { name: 'Voucher 30 Hari', price: 110000 },
+];
+
+// ── INIT ──
+window.addEventListener('load', () => {
+  if (window.location.hash.startsWith('#pay=')) {
+    showPaymentPage(window.location.hash.slice(5));
+    return;
+  }
+
+  // 🔥 LOAD TRANSAKSI DARI DB
+fetch(API_URL + "/transactions")
+  .then(res => res.json())
+  .then(data => {
+    if (data) {
+      transactions = data.map(tx => ({
+        name: tx.product,
+        price: tx.price,
+        time: tx.date,
+        fee: 0
+      }));
+      renderTxLog();
+    }
+  });
+
+
+    fetch(API_URL + "/load")
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.qrisString) {
+          config = data;
+          renderKasir();
+        } else {
+          renderProductRows(DEFAULT_PRODUCTS);
+        }
+      })
+      .catch(() => {
+        renderProductRows(DEFAULT_PRODUCTS);
+      });
+
+    startClock();
+});
+
+// ── PAYMENT PAGE ──
+function showPaymentPage(encoded) {
+  document.getElementById('setup-screen').style.display   = 'none';
+  document.getElementById('kasir-screen').style.display   = 'none';
+  document.getElementById('payment-screen').style.display = 'flex';
+  try {
+    const data = JSON.parse(atob(encoded));
+    document.title = 'Bayar ' + data.name + ' · 3QRIS';
+    document.getElementById('payProductName').textContent   = data.name;
+    document.getElementById('payAmountDisplay').textContent = 'Rp ' + data.price.toLocaleString('id-ID');
+    const box = document.getElementById('payment-qr-box');
+    box.innerHTML = '';
+    new QRCode(box, { text: data.qris, width: 240, height: 240, colorDark: '#000', colorLight: '#fff', correctLevel: QRCode.CorrectLevel.M });
+    window._payData = data;
+  } catch(e) {
+    document.getElementById('paymentContent').innerHTML = `
+      <div class="pay-error">
+        <div class="exp-icon">❌</div>
+        <h3>Link Tidak Valid</h3>
+        <p>Link pembayaran ini rusak atau sudah tidak berlaku.<br>Minta link baru dari penjual.</p>
+      </div>`;
+  }
+}
+
+function downloadPaymentQR() {
+  const canvas = document.querySelector('#payment-qr-box canvas');
+  if (!canvas) return;
+  const pad = 20, c2 = document.createElement('canvas');
+  c2.width = canvas.width + pad*2; c2.height = canvas.height + pad*2;
+  const ctx = c2.getContext('2d');
+  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,c2.width,c2.height);
+  ctx.drawImage(canvas, pad, pad);
+  const a = document.createElement('a');
+  a.download = '3qris-' + ((window._payData?.name || 'bayar').replace(/\s+/g,'-')) + '.png';
+  a.href = c2.toDataURL('image/png'); a.click();
+}
+
+// ── CLOCK ──
+function startClock() {
+  const el = document.getElementById('clockDisplay');
+  if (!el) return;
+  const tick = () => el.textContent = new Date().toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  tick(); setInterval(tick, 1000);
+}
+
+// ── SETUP ──
+let rowId = 0;
+function renderProductRows(products) { document.getElementById('productList').innerHTML = ''; products.forEach(p => addProductRow(p.name, p.price)); }
+function addProductRow(name='', price='') {
+  const id = rowId++;
+  const row = document.createElement('div');
+  row.className = 'product-row'; row.id = 'row-' + id;
+  row.innerHTML = `<input type="text" placeholder="Nama produk" value="${name}" class="name-input" /><input type="number" placeholder="Harga" value="${price}" class="price" min="1" /><button class="btn-icon" onclick="removeRow('row-${id}')">✕</button>`;
+  document.getElementById('productList').appendChild(row);
+}
+function removeRow(id) { document.getElementById(id)?.remove(); }
+function getProductsFromForm() {
+  return [...document.querySelectorAll('#productList .product-row')].reduce((acc, row) => {
+    const name = row.querySelector('.name-input').value.trim(), price = parseInt(row.querySelector('.price').value);
+    if (name && price > 0) acc.push({ name, price }); return acc;
+  }, []);
+}
+
+// ── UPLOAD & AUTO-SCAN ──
+const _zone = document.getElementById('uploadZone');
+const _input = document.getElementById('fileInput');
+
+_zone.addEventListener('click', () => _input.click());
+_input.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+_zone.addEventListener('dragenter', e => { e.preventDefault(); e.stopPropagation(); _zone.classList.add('drag-over'); });
+_zone.addEventListener('dragover',  e => { e.preventDefault(); e.stopPropagation(); _zone.classList.add('drag-over'); });
+_zone.addEventListener('dragleave', e => { e.preventDefault(); e.stopPropagation(); _zone.classList.remove('drag-over'); });
+_zone.addEventListener('drop', e => {
+  e.preventDefault(); e.stopPropagation();
+  _zone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop',     e => e.preventDefault());
+
+function handleFile(file) {
+  if (!file.type.startsWith('image/')) { showErr('Format harus JPG/PNG/WEBP'); return; }
+  document.getElementById('uploadLabel').textContent = '✓ ' + file.name;
+  const url = URL.createObjectURL(file);
+  autoScan(url, true);
+}
+
+function autoScan(src, isObjectUrl) {
+  setScanStatus('scanning', '⏳ Scanning...');
+  const img = new Image();
+  img.onload = () => {
+    const MAX = 600;
+    let w = img.width, h = img.height;
+    if (w > MAX || h > MAX) {
+      if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+      else       { w = Math.round(w * MAX / h); h = MAX; }
+    }
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const ctx = c.getContext('2d');
+    ctx.drawImage(img, 0, 0, w, h);
+    const d = ctx.getImageData(0, 0, w, h);
+    if (isObjectUrl) URL.revokeObjectURL(src);
+    const code = jsQR(d.data, d.width, d.height, { inversionAttempts: 'dontInvert' });
+    if (code && code.data.startsWith('000201')) {
+      document.getElementById('qrisManual').value = code.data;
+      setScanStatus('ok', '✓ QRIS berhasil dibaca!');
+      playSound('success');
+    } else {
+      if (w < img.width) {
+        const c2 = document.createElement('canvas');
+        c2.width = img.width; c2.height = img.height;
+        c2.getContext('2d').drawImage(img, 0, 0);
+        const d2 = c2.getContext('2d').getImageData(0, 0, img.width, img.height);
+        const code2 = jsQR(d2.data, d2.width, d2.height, { inversionAttempts: 'attemptBoth' });
+        if (code2 && code2.data.startsWith('000201')) {
+          document.getElementById('qrisManual').value = code2.data;
+          setScanStatus('ok', '✓ QRIS berhasil dibaca!');
+          playSound('success');
+          return;
+        }
+      }
+      setScanStatus('fail', '✗ Tidak terbaca — paste manual');
+      playSound('error');
+    }
+  };
+  img.src = src;
+}
+
+function setScanStatus(type, msg) { const el = document.getElementById('scanStatus'); el.textContent = msg; el.className = 'scan-status ' + type; }
+
+// ── SOUND EFFECTS ──
+function playSound(type) {
+  if (!document.getElementById('soundEnabled')?.checked) return;
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  
+  if (type === 'success') {
+    osc.frequency.setValueAtTime(523, ctx.currentTime);
+    osc.frequency.setValueAtTime(659, ctx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3);
+  } else if (type === 'error') {
+    osc.frequency.setValueAtTime(200, ctx.currentTime);
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.2);
+  } else if (type === 'click') {
+    osc.frequency.setValueAtTime(800, ctx.currentTime);
+    gain.gain.setValueAtTime(0.05, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.1);
+  }
+}
+
+// ── START KASIR ──
+function startKasir() {
+  const qris = document.getElementById('qrisManual').value.trim();
+  const products = getProductsFromForm();
+  hideErr();
+  if (!qris || !qris.startsWith('000201')) { showErr('QRIS string tidak valid'); return; }
+  if (!products.length) { showErr('Tambahkan minimal 1 produk'); return; }
+  config = { qrisString: qris, products };
+  fetch(API_URL + "/save", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(config)
+  })
+  .then(() => {
+    renderKasir();
+  })
+  .catch(() => {
+    showErr("Gagal simpan ke server");
+  });
+}
+
+// ── RENDER KASIR ──
+function renderKasir() {
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('kasir-screen').style.display = 'flex';
+  startClock();
+  renderProductGrid();
+}
+
+function renderProductGrid(filter = '') {
+  const grid = document.getElementById('kasirProductGrid'); 
+  grid.innerHTML = '';
+  
+  // Filter produk
+  const filtered = config.products.filter(p => 
+    p.name.toLowerCase().includes(filter.toLowerCase())
+  );
+  
+  filtered.forEach(p => {
+    const card = document.createElement('div'); 
+    card.className = 'product-card'; 
+    card.onclick = () => { playSound('click'); selectProduct(p, card); };
+    card.innerHTML = `
+      <div class="tap-hint">TAP UNTUK GENERATE</div>
+      <div class="prod-name">${p.name}</div>
+      <div class="prod-price">Rp ${p.price.toLocaleString('id-ID')}</div>
+      <div class="tap-arrow">↗</div>
+    `;
+    grid.appendChild(card);
+  });
+  
+  // Tambah card "Nominal Custom"
+  const customCard = document.createElement('div');
+  customCard.className = 'custom-nominal-card';
+  customCard.onclick = () => { playSound('click'); openNominalModal(); };
+  customCard.innerHTML = `
+    <div class="icon">💰</div>
+    <div class="label">Nominal Custom</div>
+    <div class="sub">Masukkan jumlah sendiri</div>
+  `;
+  grid.appendChild(customCard);
+}
+
+// ── SEARCH FILTER ──
+function filterProducts() {
+  const query = document.getElementById('searchInput').value;
+  renderProductGrid(query);
+}
+
+// ── NOMINAL CUSTOM MODAL ──
+function openNominalModal() {
+  document.getElementById('nominalModal').classList.add('open');
+  document.getElementById('customNominalInput').value = '';
+  setTimeout(() => document.getElementById('customNominalInput').focus(), 100);
+}
+
+function closeNominalModal() {
+  document.getElementById('nominalModal').classList.remove('open');
+}
+
+function setQuickNominal(amount) {
+  document.getElementById('customNominalInput').value = amount;
+}
+
+function confirmCustomNominal() {
+  const amount = parseInt(document.getElementById('customNominalInput').value) || 0;
+  if (amount <= 0) return;
+  closeNominalModal();
+  
+  // Buat produk virtual
+  const virtualProduct = { name: 'Nominal Custom', price: amount };
+  currentProduct = virtualProduct;
+  
+  // Reset fee
+  currentFee = 0;
+  document.getElementById('feeEnabled').checked = false;
+  document.getElementById('feeOptions').classList.remove('show');
+  document.getElementById('feeSummary').style.display = 'none';
+  
+  document.getElementById('qrEmpty').style.display = 'none';
+  document.getElementById('qrResult').style.display = 'none';
+  document.getElementById('qrLoading').style.display = 'flex';
+  setTimeout(() => generateDynamicQR(virtualProduct), 300);
+}
+
+// ── SELECT PRODUCT ──
+function selectProduct(product, cardEl) {
+  document.querySelectorAll('.product-card').forEach(c => c.classList.remove('selected'));
+  cardEl.classList.add('selected'); 
+  currentProduct = product;
+  
+  // Reset fee
+  currentFee = 0;
+  document.getElementById('feeEnabled').checked = false;
+  document.getElementById('feeOptions').classList.remove('show');
+  document.getElementById('feeSummary').style.display = 'none';
+  
+  document.getElementById('qrEmpty').style.display = 'none';
+  document.getElementById('qrResult').style.display = 'none';
+  document.getElementById('qrLoading').style.display = 'flex';
+  setTimeout(() => generateDynamicQR(product), 300);
+}
+
+// ── FEE LAYANAN ──
+function toggleFee() {
+  const enabled = document.getElementById('feeEnabled').checked;
+  document.getElementById('feeOptions').classList.toggle('show', enabled);
+  if (!enabled) {
+    currentFee = 0;
+    document.getElementById('feeCustom').classList.remove('show');
+    document.getElementById('feeSummary').style.display = 'none';
+    if (currentProduct) generateDynamicQR(currentProduct);
+  }
+}
+
+function setFee(amount) {
+  currentFee = amount;
+  document.querySelectorAll('.fee-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('feeCustom').classList.remove('show');
+  updateFeeSummary();
+  if (currentProduct) generateDynamicQR(currentProduct);
+}
+
+function showCustomFee() {
+  document.querySelectorAll('.fee-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('feeCustom').classList.add('show');
+  document.getElementById('feeCustomInput').focus();
+}
+
+function applyCustomFee() {
+  const fee = parseInt(document.getElementById('feeCustomInput').value) || 0;
+  if (fee > 0) {
+    currentFee = fee;
+    updateFeeSummary();
+    if (currentProduct) generateDynamicQR(currentProduct);
+  }
+}
+
+function updateFeeSummary() {
+  if (!currentProduct) return;
+  const base = currentProduct.price;
+  const total = base + currentFee;
+  document.getElementById('feeBase').textContent = 'Rp ' + base.toLocaleString('id-ID');
+  document.getElementById('feeAmount').textContent = 'Rp ' + currentFee.toLocaleString('id-ID');
+  document.getElementById('feeTotal').textContent = 'Rp ' + total.toLocaleString('id-ID');
+  document.getElementById('feeSummary').style.display = 'block';
+}
+
+// ── QRIS ENGINE ──
+function crc16(str) {
+  let crc = 0xFFFF;
+  for (let i = 0; i < str.length; i++) { 
+    crc ^= str.charCodeAt(i) << 8; 
+    for (let j = 0; j < 8; j++) { 
+      crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1; 
+      crc &= 0xFFFF; 
+    } 
+  }
+  return crc.toString(16).toUpperCase().padStart(4, '0');
+}
+
+function convertMinimal(staticStr, amount) {
+  let body = staticStr.trim().slice(0, -8);
+  body = body.replace('010211', '010212');
+  body = body.replace(/54\d{2}\d+(?=5[5-9]|6[0-9]|8[0-9])/, '');
+  const amtStr = String(amount), tag54 = '54' + String(amtStr.length).padStart(2,'0') + amtStr;
+  body = body.includes('5802ID') ? body.replace('5802ID', tag54 + '5802ID') : body + tag54;
+  const w = body + '6304'; 
+  return w + crc16(w);
+}
+
+function generateDynamicQR(product) {
+  const totalAmount = product.price + currentFee;
+  currentTotal = totalAmount;
+  const result = convertMinimal(config.qrisString, totalAmount);
+  if (crc16(result.slice(0,-4)) !== result.slice(-4)) { 
+    alert('CRC tidak valid.'); 
+    document.getElementById('qrLoading').style.display='none'; 
+    document.getElementById('qrEmpty').style.display='block'; 
+    return; 
+  }
+  showQR(result, product, totalAmount);
+}
+
+// ── SHOW QR ──
+function showQR(qrisString, product, totalAmount) {
+  const box = document.getElementById('qr-box'); 
+  box.innerHTML = '';
+  new QRCode(box, { text: qrisString, width: 230, height: 230, colorDark: '#000', colorLight: '#fff', correctLevel: QRCode.CorrectLevel.M });
+  
+  const displayName = currentFee > 0 ? `${product.name} + Fee` : product.name;
+  document.getElementById('qrProductBadge').textContent = displayName;
+  document.getElementById('qrAmount').textContent = 'Rp ' + totalAmount.toLocaleString('id-ID');
+  document.getElementById('qrLoading').style.display = 'none';
+  document.getElementById('qrResult').style.display  = 'flex';
+
+  // Update fee summary
+  if (currentFee > 0) updateFeeSummary();
+
+  // Build payment link
+  const payload = btoa(JSON.stringify({ qris: qrisString, name: displayName, price: totalAmount }));
+  const link = window.location.origin + window.location.pathname + '#pay=' + payload;
+  document.getElementById('paymentLinkInput').value = link;
+  const btn = document.getElementById('btnCopyLink'); 
+  btn.textContent = '📋 Copy'; 
+  btn.classList.remove('copied');
+
+  addTransaction(product, totalAmount);
+  document.getElementById('qrResult').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  playSound('success');
+}
+
+// ── COPY PAYMENT LINK ──
+function copyPaymentLink() {
+  const link = document.getElementById('paymentLinkInput').value;
+  navigator.clipboard.writeText(link).then(() => {
+    const btn = document.getElementById('btnCopyLink'); 
+    btn.textContent = '✓ Tersalin!'; 
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '📋 Copy'; btn.classList.remove('copied'); }, 2500);
+  });
+}
+
+// ── ACTIONS ──
+function downloadQR() {
+  const canvas = document.querySelector('#qr-box canvas'); 
+  if (!canvas) return;
+  const pad=20, c2=document.createElement('canvas'); 
+  c2.width=canvas.width+pad*2; 
+  c2.height=canvas.height+pad*2;
+  const ctx=c2.getContext('2d'); 
+  ctx.fillStyle='#fff'; 
+  ctx.fillRect(0,0,c2.width,c2.height); 
+  ctx.drawImage(canvas,pad,pad);
+  const a=document.createElement('a'); 
+  a.download='3qris-'+currentProduct.name.replace(/\s+/g,'-')+'.png'; 
+  a.href=c2.toDataURL('image/png'); 
+  a.click();
+}
+
+function nextTransaction() {
+  document.getElementById('qrResult').style.display='none'; 
+  document.getElementById('qrEmpty').style.display='block';
+  document.querySelectorAll('.product-card').forEach(c=>c.classList.remove('selected')); 
+  currentProduct=null;
+  currentFee = 0;
+  document.getElementById('feeEnabled').checked = false;
+  document.getElementById('feeOptions').classList.remove('show');
+  document.getElementById('feeSummary').style.display = 'none';
+}
+
+function addTransaction(product, totalAmount) {
+  const time = new Date().toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
+
+  const tx = {
+    name: product.name,
+    price: totalAmount,
+    time,
+    fee: currentFee
+  };
+
+  // 👉 simpan ke memory (biar langsung tampil)
+  transactions.unshift(tx);
+  if (transactions.length > 20) transactions.pop();
+
+  renderTxLog();
+
+  // 🔥 SIMPAN KE BACKEND
+  fetch(API_URL + "/transaction", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(tx)
+  }).catch(err => console.log("Gagal simpan transaksi:", err));
+}
+
+function renderTxLog() {
+  const list = document.getElementById('txList');
+  if (!transactions.length) { 
+    list.innerHTML = '<div class="tx-empty">Belum ada transaksi</div>'; 
+    return; 
+  }
+  list.innerHTML = transactions.map(tx => `
+    <div class="tx-item">
+      <div>
+        <div class="tx-name">${tx.name}${tx.fee > 0 ? ' <span style="color:var(--yellow);font-size:11px;">+Fee</span>' : ''}</div>
+        <div class="tx-time">${tx.time}</div>
+      </div>
+      <div class="tx-price">Rp ${tx.price.toLocaleString('id-ID')}</div>
+    </div>
+  `).join('');
+}
+
+function openSettings()  { document.getElementById('settingsModal').classList.add('open'); }
+function closeSettings() { document.getElementById('settingsModal').classList.remove('open'); }
+function goSetup() {
+  closeSettings(); 
+  document.getElementById('kasir-screen').style.display='none'; 
+  document.getElementById('setup-screen').style.display='flex';
+  document.getElementById('qrisManual').value=config.qrisString; 
+  document.getElementById('productList').innerHTML='';
+  config.products.forEach(p => addProductRow(p.name, p.price));
+}
+function showErr(msg) { const el=document.getElementById('errMsg'); el.textContent=msg; el.style.display='block'; }
+function hideErr()    { document.getElementById('errMsg').style.display='none'; }
+</script>
+</body>
+</html>
