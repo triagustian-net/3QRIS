@@ -1,6 +1,7 @@
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
 const cors = require("cors");
+const path = require("path");
 
 const app = express();
 app.use(express.json());
@@ -83,7 +84,7 @@ app.post("/transaction", (req, res) => {
         return res.status(500).send({ success: false });
       }
       res.send({ success: true });
-    }
+    },
   );
 });
 
@@ -105,25 +106,28 @@ app.get("/", (req, res) => {
   res.send("API 3QRIS SQLite jalan 🚀");
 });
 
-const PORT = process.env.PORT || 5000;
+// ==========================
+// 🔥 SERVE STATIC FILES
+// ==========================
 
-const path = require("path");
-
-// serve file static (HTML, CSS, JS)
+// Serve file static (HTML, CSS, JS) dari folder saat ini
 app.use(express.static(__dirname));
 
-// fallback ke index.html
-app.get("*", (req, res) => {
+// Fallback untuk SPA (Single Page Application)
+// Gunakan app.use untuk middleware, bukan app.get dengan wildcard
+app.use((req, res, next) => {
+  // Cek apakah request meminta file dengan ekstensi
+  if (req.path.includes(".")) {
+    return next(); // lanjut ke express.static
+  }
+  // Kirim index.html untuk semua route lainnya
   res.sendFile(path.join(__dirname, "index.html"));
-});
-
-app.listen(PORT, () => {
-  console.log("Server jalan di port " + PORT);
 });
 
 // ==========================
 // 🔥 RUN SERVER
 // ==========================
-app.listen(5000, () => {
-  console.log("Server SQLite jalan di http://localhost:5000");
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server SQLite jalan di http://localhost:${PORT}`);
 });
