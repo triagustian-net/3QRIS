@@ -214,21 +214,18 @@
   }
 
   function switchWelcomeTab(tab) {
-    document.querySelectorAll("#welcome-overlay .welcome-tab").forEach((t) => t.classList.remove("active"));
-    document.querySelectorAll("#welcome-overlay .welcome-form").forEach((f) => f.classList.remove("active"));
     hideWelcomeMessages();
-    if (tab === "login") {
-      document.querySelector("#welcome-overlay .welcome-tab:nth-child(1)").classList.add("active");
-      $("welcome-login").classList.add("active");
-      $("loginUsername").focus();
-    } else if (tab === "register") {
-      document.querySelector("#welcome-overlay .welcome-tab:nth-child(2)").classList.add("active");
-      $("welcome-register").classList.add("active");
-      $("regUsername").focus();
-    } else if (tab === "guest") {
-      document.querySelector("#welcome-overlay .welcome-tab:nth-child(3)").classList.add("active");
-      $("welcome-guest").classList.add("active");
-    }
+    // Set active tab via data-tab
+    document.querySelectorAll("#welcome-overlay .welcome-tab").forEach((t) => {
+      t.classList.toggle("active", t.dataset.tab === tab);
+    });
+    // Set active form
+    document.querySelectorAll("#welcome-overlay .welcome-form").forEach((f) => {
+      f.classList.toggle("active", f.id === "welcome-" + tab);
+    });
+    // Focus
+    if (tab === "login") $("loginUsername").focus();
+    else if (tab === "register") $("regUsername").focus();
   }
 
   async function handleLogin(e) {
@@ -1111,11 +1108,9 @@
     document.querySelector(".btn-welcome.guest")?.addEventListener("click", handleGuest);
 
     // Welcome tab switching
-    document.querySelectorAll("#welcome-overlay .welcome-tab").forEach((tab, i) => {
+    document.querySelectorAll("#welcome-overlay .welcome-tab").forEach((tab) => {
       tab.addEventListener("click", function () {
-        if (i === 0) switchWelcomeTab("login");
-        else if (i === 1) switchWelcomeTab("register");
-        else switchWelcomeTab("guest");
+        switchWelcomeTab(this.dataset.tab);
       });
     });
 
