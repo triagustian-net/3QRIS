@@ -42,6 +42,7 @@
       btnAdmin: $("btnAdmin"),
       btnSettings: $("btnSettings"),
       btnLogout: $("btnLogout"),
+      btnChangeQris: $("btnChangeQris"),
       clockDisplay: $("clockDisplay"),
       searchInput: $("searchInput"),
       qrEmpty: $("qrEmpty"),
@@ -1186,6 +1187,7 @@
 
     // Settings
     els.btnSettings?.addEventListener("click", openSettings);
+    els.btnChangeQris?.addEventListener("click", goSetup);
     els.btnLogout?.addEventListener("click", handleLogout);
     els.btnAdmin?.addEventListener("click", openAdmin);
 
