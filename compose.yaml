@@ -1,0 +1,21 @@
+services:
+  app:
+    build: .
+    container_name: 3qris
+    ports:
+      - "5001:5001"
+    environment:
+      - JWT_SECRET=${JWT_SECRET:-ganti-dengan-random-string-minimal-32-karakter}
+      - PORT=5001
+      - DB_PATH=/app/data/3qris.db
+      - NODE_ENV=production
+      - TRUST_PROXY=false
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5001/api"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

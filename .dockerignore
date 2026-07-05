@@ -1,0 +1,9 @@
+node_modules/
+*.db
+.env
+.git/
+.gitignore
+*.backup
+README.md
+LICENSE
+server.js.backup

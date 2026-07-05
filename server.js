@@ -124,7 +124,8 @@ app.use((req, res, next) => {
 // ════════════════════════════
 // 🔥 DATABASE INIT
 // ════════════════════════════
-const db = new sqlite3.Database("./3qris.db");
+const DB_PATH = process.env.DB_PATH || "./3qris.db";
+const db = new sqlite3.Database(DB_PATH);
 
 // Promisify helpers
 const dbGet = (sql, params = []) =>

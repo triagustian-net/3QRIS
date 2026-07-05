@@ -88,6 +88,19 @@ cp .env.example .env
 node server.js
 ```
 
+Atau pake **Docker** (lebih gampang):
+
+```bash
+# Clone & masuk folder
+git clone https://github.com/triagustian-net/3QRIS.git
+cd 3QRIS
+
+# Jalanin — tinggal 1 perintah
+JWT_SECRET="ganti-dengan-random-string" docker compose up -d
+
+# Buka http://localhost:5001
+```
+
 Buka **http://localhost:5001** — langsung muncul halaman auth login/register/guest.
 
 ### Deploy Production
