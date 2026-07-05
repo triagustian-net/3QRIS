@@ -13,6 +13,17 @@
     <a href="#lisensi">Lisensi</a>
   </p>
   <br>
+  <a href="https://render.com/deploy?repo=https://github.com/triagustian-net/3QRIS">
+    <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" width="180">
+  </a>
+  <br><br>
+  <table>
+    <tr>
+      <td><img src="screenshots/welcome.png" width="380" alt="Welcome / Auth"></td>
+      <td><img src="screenshots/kasir.png" width="380" alt="Kasir / QR Payment"></td>
+      <td><img src="screenshots/mobile.png" width="180" alt="Mobile View"></td>
+    </tr>
+  </table>
 </div>
 
 ---

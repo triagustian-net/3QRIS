@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: 3qris-kasir
+    runtime: node
+    repo: https://github.com/triagustian-net/3QRIS
+    branch: main
+    plan: free
+    envVars:
+      - key: JWT_SECRET
+        sync: false
+      - key: PORT
+        value: 5001
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "true"
+    buildCommand: npm install --omit=dev
+    startCommand: node server.js
+    healthCheckPath: /api
+    autoDeploy: true
