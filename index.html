@@ -209,6 +209,45 @@
       .qr-actions { flex-direction: column; }
       .quick-nominals { grid-template-columns: repeat(2, 1fr); }
     }
+
+    /* ══ WELCOME MODAL (Register / Login / Guest) ══ */
+    #welcome-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      z-index: 200; align-items: center; justify-content: center; padding: 20px;
+    }
+    #welcome-overlay.open { display: flex; }
+    .welcome-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 24px;
+      padding: 36px 32px; max-width: 420px; width: 100%; animation: fadeInUp 0.35s ease;
+    }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+    .welcome-brand { font-size: 32px; font-weight: 800; letter-spacing: -1px; margin-bottom: 6px; text-align: center; }
+    .welcome-brand span { color: var(--accent); }
+    .welcome-subtitle { font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 28px; line-height: 1.6; }
+    .welcome-tabs { display: flex; gap: 4px; margin-bottom: 24px; background: var(--card2); border-radius: 10px; padding: 4px; }
+    .welcome-tab { flex: 1; padding: 10px; text-align: center; font-size: 13px; font-weight: 600; cursor: pointer; border-radius: 8px; color: var(--muted); transition: all 0.2s; border: none; background: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .welcome-tab.active { background: var(--accent); color: #fff; }
+    .welcome-tab:hover:not(.active) { color: var(--text); }
+    .welcome-form { display: none; flex-direction: column; gap: 14px; }
+    .welcome-form.active { display: flex; }
+    .welcome-form input {
+      width: 100%; background: var(--card2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 14px; font-size: 14px; color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif; outline: none; transition: border-color 0.2s;
+    }
+    .welcome-form input:focus { border-color: var(--accent); }
+    .welcome-form input::placeholder { color: var(--muted); font-size: 13px; }
+    .btn-welcome { width: 100%; padding: 13px; border: none; border-radius: 10px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .btn-welcome.primary { background: linear-gradient(135deg, var(--accent), #6366f1); color: #fff; }
+    .btn-welcome.primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-welcome.ghost { background: transparent; color: var(--muted); font-weight: 500; font-size: 13px; }
+    .btn-welcome.ghost:hover { color: var(--text); }
+    .btn-welcome.guest { background: var(--card2); color: var(--text); border: 1px solid var(--border); }
+    .btn-welcome.guest:hover { border-color: var(--accent); }
+    .welcome-error { display: none; font-size: 12px; color: #fca5a5; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); border-radius: 8px; padding: 10px 12px; text-align: center; }
+    .welcome-success { display: none; font-size: 12px; color: #86efac; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.2); border-radius: 8px; padding: 10px 12px; text-align: center; }
+    .welcome-divider { display: flex; align-items: center; gap: 12px; font-size: 11px; color: var(--muted); font-weight: 600; letter-spacing: 0.5px; margin: 8px 0; }
+    .welcome-divider::before, .welcome-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
   </style>
 </head>
 <body>
@@ -247,12 +286,16 @@
   <div class="topbar">
     <div class="topbar-brand"><span>3</span>QRIS Kasir</div>
     <div class="topbar-right">
+      <div id="userBadge" style="display:none;font-size:11px;color:var(--accent-g);font-weight:600;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);padding:6px 12px;border-radius:99px;margin-right:4px;"></div>
+      <div id="guestBadge" style="display:none;font-size:11px;color:var(--yellow);font-weight:600;background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.2);padding:6px 12px;border-radius:99px;margin-right:4px;">👤 Guest</div>
       <div style="font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;" id="clockDisplay"></div>
       <label class="sound-toggle">
         <input type="checkbox" id="soundEnabled" checked />
         <span>🔊</span>
       </label>
+      <button class="btn-settings" id="btnAdmin" style="display:none;background:rgba(234,179,8,0.1);border-color:rgba(234,179,8,0.3);color:var(--yellow);" onclick="openAdmin()">🛡 Admin</button>
       <button class="btn-settings" onclick="openSettings()">⚙ Pengaturan</button>
+      <button class="btn-settings" onclick="handleLogout()" style="color:#fca5a5;" title="Logout / Ganti Akun">🚪</button>
     </div>
   </div>
   <div class="kasir-body">
@@ -391,10 +434,131 @@
   </div>
 </div>
 
+<!-- ══════════════════════════════
+     ADMIN PANEL
+══════════════════════════════ -->
+<div class="modal-overlay" id="adminModal">
+  <div class="modal" style="max-width:800px;max-height:90vh;overflow-y:auto;padding:28px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h3 style="margin:0;">🛡 Panel Admin</h3>
+      <button class="btn-cancel" style="width:auto;padding:6px 14px;" onclick="closeAdmin()">✕ Tutup</button>
+    </div>
+
+    <!-- STATS -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px;" id="adminStats">
+      <div class="stat-card" style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Total User</div>
+        <div style="font-size:28px;font-weight:700;color:var(--accent-g);" id="statUsers">-</div>
+      </div>
+      <div class="stat-card" style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Total Transaksi</div>
+        <div style="font-size:28px;font-weight:700;color:var(--text);" id="statTx">-</div>
+      </div>
+      <div class="stat-card" style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Total Revenue</div>
+        <div style="font-size:24px;font-weight:700;color:var(--green);" id="statRevenue">-</div>
+      </div>
+      <div class="stat-card" style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">Hari Ini</div>
+        <div style="font-size:20px;font-weight:700;color:var(--yellow);" id="statToday">-</div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="welcome-tabs" style="margin-bottom:16px;">
+      <button class="welcome-tab active" onclick="switchAdminTab('users')">👥 Users</button>
+      <button class="welcome-tab" onclick="switchAdminTab('transactions')">💰 Transaksi</button>
+    </div>
+
+    <!-- TABEL USERS -->
+    <div id="adminTabUsers" style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border);color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;font-size:10px;">
+            <th style="padding:8px;text-align:left;">Username</th>
+            <th style="padding:8px;text-align:center;">Role</th>
+            <th style="padding:8px;text-align:center;">Transaksi</th>
+            <th style="padding:8px;text-align:right;">Revenue</th>
+            <th style="padding:8px;text-align:center;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="adminUsersBody">
+          <tr><td colspan="5" style="padding:20px;text-align:center;color:var(--muted);">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TABEL TRANSAKSI -->
+    <div id="adminTabTransactions" style="display:none;overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border);color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;font-size:10px;">
+            <th style="padding:8px;text-align:left;">User</th>
+            <th style="padding:8px;text-align:left;">Produk</th>
+            <th style="padding:8px;text-align:right;">Harga</th>
+            <th style="padding:8px;text-align:right;">Tanggal</th>
+          </tr>
+        </thead>
+        <tbody id="adminTxBody">
+          <tr><td colspan="4" style="padding:20px;text-align:center;color:var(--muted);">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     WELCOME MODAL (Register / Login / Guest)
+══════════════════════════════ -->
+<div id="welcome-overlay">
+  <div class="welcome-card">
+    <div class="welcome-brand"><span>3</span>QRIS</div>
+    <div class="welcome-subtitle">QRIS Kasir Digital — Generate QR pembayaran dalam 1 klik. Daftar untuk menyimpan data kamu di server, atau lanjut tanpa akun.</div>
+
+    <div class="welcome-tabs">
+      <button class="welcome-tab active" onclick="switchWelcomeTab('login')">🔑 Login</button>
+      <button class="welcome-tab" onclick="switchWelcomeTab('register')">📝 Daftar</button>
+      <button class="welcome-tab" onclick="switchWelcomeTab('guest')">👤 Guest</button>
+    </div>
+
+    <!-- FORM LOGIN -->
+    <form class="welcome-form active" id="welcome-login" onsubmit="handleLogin(event)">
+      <input type="text" id="loginUsername" placeholder="Username" autocomplete="username" required />
+      <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" required />
+      <button type="submit" class="btn-welcome primary" id="btnLogin">Masuk</button>
+    </form>
+
+    <!-- FORM REGISTER -->
+    <form class="welcome-form" id="welcome-register" onsubmit="handleRegister(event)">
+      <input type="text" id="regUsername" placeholder="Username (min 3 karakter)" autocomplete="username" required />
+      <input type="password" id="regPassword" placeholder="Password (min 4 karakter)" autocomplete="new-password" required />
+      <input type="password" id="regPassword2" placeholder="Konfirmasi password" autocomplete="new-password" required />
+      <button type="submit" class="btn-welcome primary" id="btnRegister">Daftar Sekarang</button>
+    </form>
+
+    <!-- GUEST -->
+    <div class="welcome-form" id="welcome-guest">
+      <div style="color:var(--muted);font-size:13px;line-height:1.8;text-align:center;padding:8px 0 16px;">
+        ⚠️ <strong style="color:var(--text)">Mode Guest</strong><br>
+        Data QRIS & produk hanya disimpan di <strong style="color:var(--text)">browser ini</strong>.<br>
+        Jika kamu ganti HP/PC atau hapus history browser,<br>kamu harus <strong style="color:var(--yellow)">setup ulang dari awal</strong>.
+      </div>
+      <button class="btn-welcome guest" onclick="handleGuest()">🚀 Lanjut Tanpa Akun</button>
+    </div>
+
+    <div class="welcome-error" id="welcomeError"></div>
+    <div class="welcome-success" id="welcomeSuccess"></div>
+  </div>
+</div>
+
 <script>
-const API_URL = "";
+const API_URL = "/api";
 let config = { qrisString: '', products: [] };
 let transactions = [], currentProduct = null, currentFee = 0, currentTotal = 0;
+let authToken = null;      // JWT token
+let currentUser = null;    // { id, username, role }
+let isGuest = false;       // true jika user tidak login
+let isAdmin = false;       // true jika user role = admin
 
 const DEFAULT_PRODUCTS = [
   { name: 'Voucher 1 Hari',  price: 6500 },
@@ -404,45 +568,324 @@ const DEFAULT_PRODUCTS = [
   { name: 'Voucher 30 Hari', price: 110000 },
 ];
 
+// ═══ HELPER: LOCAL STORAGE ═══
+function saveToLocal(key, value) {
+  try { localStorage.setItem('3qris_' + key, JSON.stringify(value)); } catch(e) {}
+}
+function loadFromLocal(key) {
+  try { const v = localStorage.getItem('3qris_' + key); return v ? JSON.parse(v) : null; } catch(e) { return null; }
+}
+function removeFromLocal(key) {
+  try { localStorage.removeItem('3qris_' + key); } catch(e) {}
+}
+
+// ═══ AUTH HEADERS ═══
+function authHeaders() {
+  if (!authToken) return {};
+  return { 'Authorization': 'Bearer ' + authToken, 'Content-Type': 'application/json' };
+}
+
+// ═══ API FETCH WRAPPER ═══
+async function apiFetch(url, options = {}) {
+  const headers = { ...authHeaders(), ...(options.headers || {}) };
+  const res = await fetch(url, { ...options, headers });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || 'Gagal ' + res.status);
+  }
+  return data;
+}
+
 // ── INIT ──
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
   if (window.location.hash.startsWith('#pay=')) {
     showPaymentPage(window.location.hash.slice(5));
     return;
   }
 
-  // 🔥 LOAD TRANSAKSI DARI DB
-fetch(API_URL + "/transactions")
-  .then(res => res.json())
-  .then(data => {
-    if (data) {
-      transactions = data.map(tx => ({
-        name: tx.product,
-        price: tx.price,
-        time: tx.date,
-        fee: 0
-      }));
-      renderTxLog();
+  // Cek apakah ada token tersimpan
+  const savedToken = loadFromLocal('token');
+  if (savedToken) {
+    authToken = savedToken;
+    try {
+      // Verifikasi token ke server
+      const data = await apiFetch(API_URL + '/me');
+      currentUser = data.user;
+      isAdmin = data.user.role === 'admin';
+      isGuest = false;
+      await loadFromServer();
+      return;
+    } catch (e) {
+      // Token expired / invalid
+      authToken = null;
+      currentUser = null;
+      removeFromLocal('token');
     }
-  });
+  }
 
+  // Cek apakah sebelumnya guest (ada data di localStorage)
+  const localConfig = loadFromLocal('config');
+  if (localConfig && localConfig.qrisString) {
+    // Guest returning user — langsung ke kasir dengan data lokal
+    isGuest = true;
+    config = localConfig;
+    const localTx = loadFromLocal('transactions') || [];
+    transactions = localTx;
+    renderKasir();
+    return;
+  }
 
-    fetch(API_URL + "/load")
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.qrisString) {
-          config = data;
-          renderKasir();
-        } else {
-          renderProductRows(DEFAULT_PRODUCTS);
-        }
-      })
-      .catch(() => {
-        renderProductRows(DEFAULT_PRODUCTS);
-      });
-
-    startClock();
+  // Tidak ada token & tidak ada data lokal → tampilkan welcome modal
+  showWelcomeModal();
+  startClock();
 });
+
+// ═══ WELCOME MODAL ═══
+function showWelcomeModal() {
+  document.getElementById('welcome-overlay').classList.add('open');
+  document.getElementById('setup-screen').style.display = 'flex';
+  document.getElementById('kasir-screen').style.display = 'none';
+  hideWelcomeMessages();
+  // Default: tab login
+  switchWelcomeTab('login');
+}
+
+function hideWelcomeModal() {
+  document.getElementById('welcome-overlay').classList.remove('open');
+}
+
+function hideWelcomeMessages() {
+  document.getElementById('welcomeError').style.display = 'none';
+  document.getElementById('welcomeSuccess').style.display = 'none';
+}
+
+function showWelcomeError(msg) {
+  const el = document.getElementById('welcomeError');
+  el.textContent = msg;
+  el.style.display = 'block';
+  document.getElementById('welcomeSuccess').style.display = 'none';
+}
+
+function showWelcomeSuccess(msg) {
+  const el = document.getElementById('welcomeSuccess');
+  el.textContent = msg;
+  el.style.display = 'block';
+  document.getElementById('welcomeError').style.display = 'none';
+}
+
+function switchWelcomeTab(tab) {
+  document.querySelectorAll('.welcome-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.welcome-form').forEach(f => f.classList.remove('active'));
+  hideWelcomeMessages();
+
+  if (tab === 'login') {
+    document.querySelector('.welcome-tab:nth-child(1)').classList.add('active');
+    document.getElementById('welcome-login').classList.add('active');
+    document.getElementById('loginUsername').focus();
+  } else if (tab === 'register') {
+    document.querySelector('.welcome-tab:nth-child(2)').classList.add('active');
+    document.getElementById('welcome-register').classList.add('active');
+    document.getElementById('regUsername').focus();
+  } else if (tab === 'guest') {
+    document.querySelector('.welcome-tab:nth-child(3)').classList.add('active');
+    document.getElementById('welcome-guest').classList.add('active');
+  }
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  hideWelcomeMessages();
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const btn = document.getElementById('btnLogin');
+
+  if (!username || !password) {
+    showWelcomeError('Username dan password wajib diisi');
+    return;
+  }
+
+  btn.textContent = 'Memproses...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(API_URL + '/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showWelcomeError(data.error || 'Login gagal');
+      btn.textContent = 'Masuk';
+      btn.disabled = false;
+      return;
+    }
+
+    // Login sukses
+    authToken = data.token;
+    currentUser = data.user;
+    isAdmin = data.user.role === 'admin';
+    isGuest = false;
+    saveToLocal('token', authToken);
+    hideWelcomeModal();
+    await loadFromServer();
+  } catch (err) {
+    showWelcomeError('Gagal terhubung ke server. Pastikan server berjalan.');
+    btn.textContent = 'Masuk';
+    btn.disabled = false;
+  }
+}
+
+async function handleRegister(e) {
+  e.preventDefault();
+  hideWelcomeMessages();
+  const username = document.getElementById('regUsername').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const password2 = document.getElementById('regPassword2').value;
+  const btn = document.getElementById('btnRegister');
+
+  if (!username || !password) {
+    showWelcomeError('Username dan password wajib diisi');
+    return;
+  }
+  if (username.length < 3) {
+    showWelcomeError('Username minimal 3 karakter');
+    return;
+  }
+  if (password.length < 4) {
+    showWelcomeError('Password minimal 4 karakter');
+    return;
+  }
+  if (password !== password2) {
+    showWelcomeError('Konfirmasi password tidak cocok');
+    return;
+  }
+
+  btn.textContent = 'Mendaftarkan...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(API_URL + '/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showWelcomeError(data.error || 'Pendaftaran gagal');
+      btn.textContent = 'Daftar Sekarang';
+      btn.disabled = false;
+      return;
+    }
+
+    // Registrasi sukses
+    authToken = data.token;
+    currentUser = data.user;
+    isAdmin = data.user.role === 'admin';
+    isGuest = false;
+    saveToLocal('token', authToken);
+    showWelcomeSuccess('✅ Pendaftaran berhasil! Silakan setup QRIS dan produk kamu.');
+    btn.textContent = 'Daftar Sekarang';
+    btn.disabled = false;
+
+    // Redirect ke setup setelah 1.5 detik
+    setTimeout(() => {
+      hideWelcomeModal();
+      document.getElementById('setup-screen').style.display = 'flex';
+      document.getElementById('kasir-screen').style.display = 'none';
+      renderProductRows(DEFAULT_PRODUCTS);
+    }, 1500);
+  } catch (err) {
+    showWelcomeError('Gagal terhubung ke server. Pastikan server berjalan.');
+    btn.textContent = 'Daftar Sekarang';
+    btn.disabled = false;
+  }
+}
+
+function handleGuest() {
+  isGuest = true;
+  authToken = null;
+  currentUser = null;
+  removeFromLocal('token');
+  hideWelcomeModal();
+
+  // Tampilkan setup screen
+  document.getElementById('setup-screen').style.display = 'flex';
+  document.getElementById('kasir-screen').style.display = 'none';
+
+  // Load dari localStorage jika ada
+  const localConfig = loadFromLocal('config');
+  if (localConfig && localConfig.products) {
+    renderProductRows(localConfig.products);
+    document.getElementById('qrisManual').value = localConfig.qrisString || '';
+  } else {
+    renderProductRows(DEFAULT_PRODUCTS);
+  }
+}
+
+async function loadFromServer() {
+  try {
+    // Load config dari server
+    const data = await apiFetch(API_URL + '/load');
+    if (data && data.qrisString) {
+      config = data;
+      renderKasir();
+    } else {
+      // Belum ada config → tampilkan setup
+      document.getElementById('setup-screen').style.display = 'flex';
+      document.getElementById('kasir-screen').style.display = 'none';
+      renderProductRows(DEFAULT_PRODUCTS);
+    }
+
+    // Load transaksi dari server
+    try {
+      const txData = await apiFetch(API_URL + '/transactions');
+      if (txData) {
+        transactions = txData.map(tx => ({
+          name: tx.product,
+          price: tx.price,
+          time: tx.date,
+          fee: 0
+        }));
+        renderTxLog();
+      }
+    } catch(e) {
+      console.log('Gagal load transaksi:', e);
+    }
+  } catch (e) {
+    console.error('Gagal load dari server:', e);
+    // Fallback: tampilkan setup
+    document.getElementById('setup-screen').style.display = 'flex';
+    document.getElementById('kasir-screen').style.display = 'none';
+    renderProductRows(DEFAULT_PRODUCTS);
+  }
+}
+
+// ═══ LOGOUT ═══
+function handleLogout() {
+  if (!confirm('Yakin ingin logout?\n\n' + (isGuest ? 'Data guest akan tetap tersimpan di browser ini.' : 'Data kamu aman di server, login lagi untuk mengakses.'))) return;
+
+  if (isGuest) {
+    // Guest: simpan config terakhir ke localStorage sebelum logout
+    saveToLocal('config', config);
+    saveToLocal('transactions', transactions);
+  }
+
+  authToken = null;
+  currentUser = null;
+  isGuest = false;
+  removeFromLocal('token');
+  config = { qrisString: '', products: [] };
+  transactions = [];
+  currentProduct = null;
+  currentFee = 0;
+
+  document.getElementById('kasir-screen').style.display = 'none';
+  document.getElementById('setup-screen').style.display = 'flex';
+  showWelcomeModal();
+}
 
 // ── PAYMENT PAGE ──
 function showPaymentPage(encoded) {
@@ -613,23 +1056,49 @@ function startKasir() {
   if (!qris || !qris.startsWith('000201')) { showErr('QRIS string tidak valid'); return; }
   if (!products.length) { showErr('Tambahkan minimal 1 produk'); return; }
   config = { qrisString: qris, products };
-  fetch(API_URL + "/save", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(config)
-  })
-  .then(() => {
+
+  if (isGuest) {
+    // Guest mode: simpan ke localStorage
+    saveToLocal('config', config);
     renderKasir();
-  })
-  .catch(() => {
-    showErr("Gagal simpan ke server");
-  });
+  } else {
+    // Logged in: simpan ke server
+    fetch(API_URL + "/save", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify(config)
+    })
+    .then(res => res.json())
+    .then(() => {
+      renderKasir();
+    })
+    .catch(() => {
+      showErr("Gagal simpan ke server");
+    });
+  }
 }
 
 // ── RENDER KASIR ──
 function renderKasir() {
   document.getElementById('setup-screen').style.display = 'none';
   document.getElementById('kasir-screen').style.display = 'flex';
+
+  // Tampilkan badge user/guest
+  if (isGuest) {
+    document.getElementById('guestBadge').style.display = 'inline';
+    document.getElementById('userBadge').style.display = 'none';
+    document.getElementById('btnAdmin').style.display = 'none';
+  } else if (currentUser) {
+    document.getElementById('userBadge').textContent = (isAdmin ? '🛡 ' : '🔒 ') + currentUser.username;
+    document.getElementById('userBadge').style.display = 'inline';
+    document.getElementById('guestBadge').style.display = 'none';
+    document.getElementById('btnAdmin').style.display = isAdmin ? 'inline-block' : 'none';
+  } else {
+    document.getElementById('userBadge').style.display = 'none';
+    document.getElementById('guestBadge').style.display = 'none';
+    document.getElementById('btnAdmin').style.display = 'none';
+  }
+
   startClock();
   renderProductGrid();
 }
@@ -893,12 +1362,16 @@ function addTransaction(product, totalAmount) {
 
   renderTxLog();
 
-  // 🔥 SIMPAN KE BACKEND
-  fetch(API_URL + "/transaction", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(tx)
-  }).catch(err => console.log("Gagal simpan transaksi:", err));
+  // 🔥 SIMPAN KE BACKEND / LOCAL
+  if (isGuest) {
+    saveToLocal('transactions', transactions);
+  } else {
+    fetch(API_URL + "/transaction", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify(tx)
+    }).catch(err => console.log("Gagal simpan transaksi:", err));
+  }
 }
 
 function renderTxLog() {
@@ -927,9 +1400,124 @@ function goSetup() {
   document.getElementById('qrisManual').value=config.qrisString; 
   document.getElementById('productList').innerHTML='';
   config.products.forEach(p => addProductRow(p.name, p.price));
+  
+  // Guest: hapus data lama dari localStorage agar bisa setup ulang
+  if (isGuest) {
+    removeFromLocal('config');
+  }
 }
 function showErr(msg) { const el=document.getElementById('errMsg'); el.textContent=msg; el.style.display='block'; }
 function hideErr()    { document.getElementById('errMsg').style.display='none'; }
+
+// ═══ ADMIN PANEL ═══
+function openAdmin() {
+  document.getElementById('adminModal').classList.add('open');
+  loadAdminStats();
+  switchAdminTab('users');
+}
+
+function closeAdmin() {
+  document.getElementById('adminModal').classList.remove('open');
+}
+
+function switchAdminTab(tab) {
+  document.querySelectorAll('#adminModal .welcome-tab').forEach((t, i) => {
+    t.classList.toggle('active', (tab === 'users' && i === 0) || (tab === 'transactions' && i === 1));
+  });
+  document.getElementById('adminTabUsers').style.display = tab === 'users' ? '' : 'none';
+  document.getElementById('adminTabTransactions').style.display = tab === 'transactions' ? '' : 'none';
+
+  if (tab === 'users') loadAdminUsers();
+  if (tab === 'transactions') loadAdminTransactions();
+}
+
+async function loadAdminStats() {
+  try {
+    const data = await apiFetch(API_URL + '/admin/stats');
+    document.getElementById('statUsers').textContent = data.totalUsers || 0;
+    document.getElementById('statTx').textContent = data.totalTransactions || 0;
+    document.getElementById('statRevenue').textContent = 'Rp ' + (data.totalRevenue || 0).toLocaleString('id-ID');
+    document.getElementById('statToday').textContent = 'Rp ' + (data.todayRevenue || 0).toLocaleString('id-ID');
+  } catch (e) {
+    console.error('Gagal load stats:', e);
+  }
+}
+
+async function loadAdminUsers() {
+  const tbody = document.getElementById('adminUsersBody');
+  tbody.innerHTML = '<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--muted);">Loading...</td></tr>';
+  try {
+    const users = await apiFetch(API_URL + '/admin/users');
+    if (!users.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--muted);">Belum ada user</td></tr>';
+      return;
+    }
+    tbody.innerHTML = users.map(u => `
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:10px 8px;font-weight:600;">${u.username}</td>
+        <td style="padding:10px 8px;text-align:center;">
+          <span style="font-size:11px;padding:3px 8px;border-radius:99px;${u.role === 'admin' ? 'background:rgba(234,179,8,0.15);color:var(--yellow);border:1px solid rgba(234,179,8,0.3);' : 'background:rgba(59,130,246,0.1);color:var(--accent-g);border:1px solid rgba(59,130,246,0.2);'}">${u.role === 'admin' ? '🛡 Admin' : '👤 User'}</span>
+        </td>
+        <td style="padding:10px 8px;text-align:center;font-family:'JetBrains Mono',monospace;">${u.tx_count || 0}</td>
+        <td style="padding:10px 8px;text-align:right;font-family:'JetBrains Mono',monospace;color:var(--green);">Rp ${(u.total_revenue || 0).toLocaleString('id-ID')}</td>
+        <td style="padding:10px 8px;text-align:center;">
+          ${u.role === 'user'
+            ? `<button style="font-size:11px;padding:4px 10px;background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.3);color:var(--yellow);border-radius:6px;cursor:pointer;" onclick="promoteUser(${u.id},'${u.username}')">⬆ Admin</button>`
+            : u.id !== currentUser.id
+              ? `<button style="font-size:11px;padding:4px 10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#fca5a5;border-radius:6px;cursor:pointer;" onclick="demoteUser(${u.id},'${u.username}')">⬇ User</button>`
+              : `<span style="font-size:11px;color:var(--muted);">(kamu)</span>`
+          }
+        </td>
+      </tr>
+    `).join('');
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="5" style="padding:20px;text-align:center;color:#fca5a5;">Gagal load data</td></tr>';
+  }
+}
+
+async function loadAdminTransactions() {
+  const tbody = document.getElementById('adminTxBody');
+  tbody.innerHTML = '<tr><td colspan="4" style="padding:20px;text-align:center;color:var(--muted);">Loading...</td></tr>';
+  try {
+    const txs = await apiFetch(API_URL + '/admin/transactions');
+    if (!txs.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="padding:20px;text-align:center;color:var(--muted);">Belum ada transaksi</td></tr>';
+      return;
+    }
+    tbody.innerHTML = txs.map(tx => `
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:10px 8px;font-weight:600;font-size:11px;">${tx.username || 'user#'+tx.user_id}</td>
+        <td style="padding:10px 8px;">${tx.product}</td>
+        <td style="padding:10px 8px;text-align:right;font-family:'JetBrains Mono',monospace;color:var(--green);font-size:11px;">Rp ${(tx.price || 0).toLocaleString('id-ID')}</td>
+        <td style="padding:10px 8px;text-align:right;color:var(--muted);font-size:11px;">${tx.date || '-'}</td>
+      </tr>
+    `).join('');
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="4" style="padding:20px;text-align:center;color:#fca5a5;">Gagal load data</td></tr>';
+  }
+}
+
+async function promoteUser(userId, username) {
+  if (!confirm(`Promosikan "${username}" menjadi Admin?`)) return;
+  try {
+    await apiFetch(API_URL + '/admin/promote/' + userId, { method: 'POST' });
+    loadAdminUsers();
+    loadAdminStats();
+  } catch (e) {
+    alert('Gagal: ' + e.message);
+  }
+}
+
+async function demoteUser(userId, username) {
+  if (!confirm(`Turunkan "${username}" dari Admin menjadi User?`)) return;
+  try {
+    await apiFetch(API_URL + '/admin/demote/' + userId, { method: 'POST' });
+    loadAdminUsers();
+    loadAdminStats();
+  } catch (e) {
+    alert('Gagal: ' + e.message);
+  }
+}
 </script>
 </body>
 </html>
