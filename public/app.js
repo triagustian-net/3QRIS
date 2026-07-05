@@ -285,8 +285,8 @@
       showWelcomeError("Username minimal 3 karakter");
       return;
     }
-    if (password.length < 4) {
-      showWelcomeError("Password minimal 4 karakter");
+    if (password.length < 6 || password.length > 128) {
+      showWelcomeError("Password minimal 6 karakter, maks 128");
       return;
     }
     if (password !== password2) {
