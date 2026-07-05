@@ -201,13 +201,124 @@
     .pay-error h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
     .pay-error p { color: var(--muted); font-size: 14px; line-height: 1.6; }
 
-    @media (max-width: 640px) {
-      .products-grid { grid-template-columns: repeat(2, 1fr); }
-      .setup-box, .payment-card { padding: 28px 20px; }
+    /* ════════════════════════════════════
+       RESPONSIVE: TABLET & MOBILE (≤768px)
+       ════════════════════════════════════ */
+    @media (max-width: 768px) {
+      .topbar { flex-wrap: wrap; gap: 8px; padding: 12px 16px; }
+      .topbar-brand { font-size: 17px; }
+      .topbar-right { flex-wrap: wrap; gap: 6px; }
+      .topbar-right .sound-toggle span { font-size: 14px; }
+      #clockDisplay { font-size: 11px; }
+      #userBadge, #guestBadge { font-size: 10px; padding: 4px 8px; }
       .kasir-body { padding: 20px 16px; }
-      .qr-panel { padding: 24px 16px; }
+      .setup-box, .payment-card { padding: 28px 20px; }
+      .qr-panel { padding: 24px 16px; min-height: auto; }
       .qr-actions { flex-direction: column; }
       .quick-nominals { grid-template-columns: repeat(2, 1fr); }
+      .modal { padding: 24px; }
+      .welcome-card { padding: 28px 20px; }
+      .products-grid { grid-template-columns: repeat(2, 1fr); }
+      .product-row { gap: 6px; }
+      .product-row input.price { width: 90px; font-size: 11px; }
+    }
+
+    @media (max-width: 640px) {
+      .products-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .product-card { padding: 16px 14px; }
+      .product-card .prod-name { font-size: 13px; }
+      .product-card .prod-price { font-size: 15px; }
+      .product-card .tap-arrow { display: none; }
+      .qr-amount { font-size: 22px; }
+      #qr-box { padding: 14px; }
+      #qr-box canvas, #qr-box img { max-width: 100%; height: auto; }
+      .search-box { max-width: 100%; }
+      .tx-log { padding: 16px; }
+      .link-input-row { flex-direction: column; }
+      .link-input-row input { width: 100%; font-size: 11px; }
+      .btn-copy-link { width: 100%; }
+      .payment-link-desc { font-size: 11px; }
+    }
+
+    /* ── MOBILE KECIL (≤480px) ── */
+    @media (max-width: 480px) {
+      .topbar { flex-direction: column; align-items: stretch; gap: 6px; padding: 10px 12px; }
+      .topbar-right { justify-content: flex-end; }
+      #clockDisplay { display: none; }
+      #userBadge, #guestBadge { display: none; }
+      .topbar-brand { font-size: 15px; text-align: center; }
+      .btn-settings { font-size: 11px; padding: 6px 10px; }
+      .setup-box, .payment-card { padding: 20px 14px; border-radius: 18px; }
+      .setup-box .brand { font-size: 22px; }
+      .setup-desc { font-size: 13px; margin-bottom: 20px; }
+      #setup-screen { padding: 16px; }
+      .upload-zone { padding: 24px 12px; }
+      .upload-zone strong { font-size: 13px; }
+      .product-row { grid-template-columns: 1fr; gap: 6px; }
+      .product-row input.price { width: 100%; }
+      .btn-icon { width: 100%; height: 36px; }
+      .btn-start { padding: 13px; font-size: 14px; }
+      .products-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .product-card { padding: 12px 10px; border-width: 1.5px; }
+      .product-card .tap-hint { font-size: 9px; margin-bottom: 6px; }
+      .product-card .prod-name { font-size: 12px; }
+      .product-card .prod-price { font-size: 14px; }
+      .custom-nominal-card { padding: 14px 12px; }
+      .custom-nominal-card .icon { font-size: 20px; }
+      .fee-options { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+      .fee-btn { font-size: 11px; padding: 8px; }
+      .fee-custom { grid-template-columns: 1fr; }
+      .fee-summary { font-size: 11px; padding: 10px; }
+      .qr-panel { padding: 16px 12px; border-radius: 18px; }
+      .qr-product-badge { font-size: 11px; padding: 5px 12px; }
+      .qr-amount { font-size: 20px; }
+      .qr-note { font-size: 11px; }
+      .btn-dl, .btn-next { font-size: 12px; padding: 10px; }
+      .payment-card { padding: 20px 14px; border-radius: 22px; }
+      .pay-product { font-size: 17px; }
+      .pay-amount { font-size: 28px; }
+      #payment-qr-box { padding: 14px; }
+      #payment-qr-box canvas, #payment-qr-box img { max-width: 100%; height: auto; }
+      .pay-steps { font-size: 12px; padding: 12px; }
+      .btn-pay-dl { font-size: 13px; padding: 11px; }
+      .tx-log { padding: 14px 12px; }
+      .tx-item { font-size: 12px; padding: 8px 0; }
+      .tx-item .tx-time { font-size: 10px; }
+      .tx-item .tx-price { font-size: 12px; }
+      .modal { padding: 20px 16px; border-radius: 16px; }
+      .modal h3 { font-size: 16px; }
+      .modal p { font-size: 12px; margin-bottom: 18px; }
+      .nominal-input { font-size: 18px; padding: 12px; }
+      .quick-btn { font-size: 12px; padding: 8px; }
+      .modal-actions { gap: 8px; }
+      .btn-cancel, .btn-confirm { font-size: 13px; padding: 11px; }
+      .welcome-card { padding: 24px 16px; border-radius: 20px; }
+      .welcome-brand { font-size: 26px; }
+      .welcome-subtitle { font-size: 12px; margin-bottom: 20px; }
+      .welcome-tab { font-size: 12px; padding: 8px; }
+      .welcome-form input { font-size: 14px; padding: 11px 12px; }
+      .btn-welcome { font-size: 13px; padding: 12px; }
+      #adminStats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      #adminStats .stat-card { padding: 12px; }
+      #adminStats .stat-card div:last-child { font-size: 20px !important; }
+      #adminModal .welcome-tab { font-size: 11px; padding: 7px; }
+      #adminModal table { font-size: 11px; }
+      #adminModal table th, #adminModal table td { padding: 6px 4px !important; }
+      div#adminTabUsers, div#adminTabTransactions { margin: 0 -8px; }
+      .payment-link-box { padding: 14px; }
+      .payment-link-desc { font-size: 11px; }
+    }
+
+    /* ── DESKTOP (≥769px) ── */
+    @media (min-width: 769px) {
+      .kasir-body { padding: 40px 32px; }
+      .products-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+      .product-card { padding: 26px 22px; }
+      .product-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(59,130,246,0.2); }
+      .qr-panel { min-height: 400px; }
+      .qr-amount { font-size: 30px; }
+      .topbar { padding: 18px 32px; }
+      .search-box { max-width: 360px; }
     }
 
     /* ══ WELCOME MODAL (Register / Login / Guest) ══ */
@@ -271,11 +382,11 @@
     <textarea class="qris-input" id="qrisManual" placeholder="Paste QRIS string di sini... (000201...)"></textarea>
     <div class="products-header">
       <div class="field-label" style="margin:0">Daftar Produk / Voucher</div>
-      <button class="btn-add" onclick="addProductRow()">+ Tambah</button>
+      <button class="btn-add">+ Tambah</button>
     </div>
     <div id="productList"></div>
     <div class="err-msg" id="errMsg"></div>
-    <button class="btn-start" onclick="startKasir()">Buka Kasir →</button>
+    <button class="btn-start">Buka Kasir →</button>
   </div>
 </div>
 
@@ -293,9 +404,9 @@
         <input type="checkbox" id="soundEnabled" checked />
         <span>🔊</span>
       </label>
-      <button class="btn-settings" id="btnAdmin" style="display:none;background:rgba(234,179,8,0.1);border-color:rgba(234,179,8,0.3);color:var(--yellow);" onclick="openAdmin()">🛡 Admin</button>
-      <button class="btn-settings" onclick="openSettings()">⚙ Pengaturan</button>
-      <button class="btn-settings" onclick="handleLogout()" style="color:#fca5a5;" title="Logout / Ganti Akun">🚪</button>
+<button class="btn-settings" id="btnAdmin" style="display:none;background:rgba(234,179,8,0.1);border-color:rgba(234,179,8,0.3);color:var(--yellow);">🛡 Admin</button>
+      <button class="btn-settings" id="btnSettings">⚙ Pengaturan</button>
+      <button class="btn-settings" id="btnLogout" style="color:#fca5a5;" title="Logout / Ganti Akun">🚪</button>
     </div>
   </div>
   <div class="kasir-body">
@@ -303,7 +414,7 @@
     
     <!-- ══ BARU: SEARCH BOX ══ -->
     <div class="search-box">
-      <input type="text" id="searchInput" placeholder="🔍 Cari produk..." oninput="filterProducts()" />
+      <input type="text" id="searchInput" placeholder="🔍 Cari produk..." />
     </div>
     
     <div class="products-grid" id="kasirProductGrid"></div>
@@ -322,21 +433,21 @@
 
         <!-- ══ BARU: FEE LAYANAN ══ -->
         <div class="fee-section">
-          <label class="fee-toggle" onclick="toggleFee()">
+          <label class="fee-toggle">
             <input type="checkbox" id="feeEnabled" />
             <span>Tambah Fee Layanan ke Customer</span>
           </label>
           <div class="fee-options" id="feeOptions">
-            <button class="fee-btn" onclick="setFee(500)">Rp 500</button>
-            <button class="fee-btn" onclick="setFee(1000)">Rp 1.000</button>
-            <button class="fee-btn" onclick="setFee(1500)">Rp 1.500</button>
-            <button class="fee-btn" onclick="setFee(2000)">Rp 2.000</button>
-            <button class="fee-btn" onclick="setFee(2500)">Rp 2.500</button>
-            <button class="fee-btn" onclick="showCustomFee()">Custom</button>
+            <button class="fee-btn" data-fee="500">Rp 500</button>
+            <button class="fee-btn" data-fee="1000">Rp 1.000</button>
+            <button class="fee-btn" data-fee="1500">Rp 1.500</button>
+            <button class="fee-btn" data-fee="2000">Rp 2.000</button>
+            <button class="fee-btn" data-fee="2500">Rp 2.500</button>
+            <button class="fee-btn">Custom</button>
           </div>
           <div class="fee-custom" id="feeCustom">
-            <input type="number" id="feeCustomInput" placeholder="Nominal fee" onchange="applyCustomFee()" />
-            <button class="btn-confirm" style="padding:10px 16px;" onclick="applyCustomFee()">OK</button>
+            <input type="number" id="feeCustomInput" placeholder="Nominal fee" />
+            <button class="btn-confirm" style="padding:10px 16px;" id="btnApplyFee">OK</button>
           </div>
           <div class="fee-summary" id="feeSummary" style="display:none;">
             <div class="row"><span>Harga Produk</span><span id="feeBase">Rp 0</span></div>
@@ -351,7 +462,7 @@
           <div class="payment-link-desc">Copy link ini → tempel ke tombol <strong style="color:var(--text)">"Beli"</strong> di website tokomu. Customer klik tombol → langsung muncul halaman QRIS siap scan.</div>
           <div class="link-input-row">
             <input type="text" id="paymentLinkInput" readonly />
-            <button class="btn-copy-link" id="btnCopyLink" onclick="copyPaymentLink()">📋 Copy</button>
+            <button class="btn-copy-link" id="btnCopyLink">📋 Copy</button>
           </div>
           <div class="link-hint">
             Contoh di HTML toko: <code>&lt;a href="LINK" target="_blank"&gt;Beli Sekarang&lt;/a&gt;</code>
@@ -359,8 +470,8 @@
         </div>
 
         <div class="qr-actions">
-          <button class="btn-dl" onclick="downloadQR()">⬇ Download QR</button>
-          <button class="btn-next" onclick="nextTransaction()">✓ Transaksi Berikutnya</button>
+          <button class="btn-dl">⬇ Download QR</button>
+          <button class="btn-next">✓ Transaksi Berikutnya</button>
         </div>
       </div>
     </div>
@@ -392,7 +503,7 @@
           <li>Konfirmasi nominal &amp; kirim</li>
         </ol>
       </div>
-      <button class="btn-pay-dl" onclick="downloadPaymentQR()">⬇ Simpan Gambar QR</button>
+      <button class="btn-pay-dl">⬇ Simpan Gambar QR</button>
     </div>
     <div class="pay-footer">Powered by <strong>3QRIS</strong></div>
   </div>
@@ -404,17 +515,17 @@
     <h3>Nominal Custom</h3>
     <p>Masukkan jumlah yang ingin ditagih.</p>
     <div class="quick-nominals">
-      <button class="quick-btn" onclick="setQuickNominal(10000)">10rb</button>
-      <button class="quick-btn" onclick="setQuickNominal(25000)">25rb</button>
-      <button class="quick-btn" onclick="setQuickNominal(50000)">50rb</button>
-      <button class="quick-btn" onclick="setQuickNominal(100000)">100rb</button>
-      <button class="quick-btn" onclick="setQuickNominal(150000)">150rb</button>
-      <button class="quick-btn" onclick="setQuickNominal(200000)">200rb</button>
+      <button class="quick-btn" data-nominal="10000">10rb</button>
+      <button class="quick-btn" data-nominal="25000">25rb</button>
+      <button class="quick-btn" data-nominal="50000">50rb</button>
+      <button class="quick-btn" data-nominal="100000">100rb</button>
+      <button class="quick-btn" data-nominal="150000">150rb</button>
+      <button class="quick-btn" data-nominal="200000">200rb</button>
     </div>
-    <input type="number" class="nominal-input" id="customNominalInput" placeholder="0" onkeydown="if(event.key==='Enter')confirmCustomNominal()" />
+    <input type="number" class="nominal-input" id="customNominalInput" placeholder="0" />
     <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeNominalModal()">Batal</button>
-      <button class="btn-confirm" onclick="confirmCustomNominal()">Generate QR</button>
+      <button class="btn-cancel" id="btnCloseNominal">Batal</button>
+      <button class="btn-confirm" id="btnConfirmNominal">Generate QR</button>
     </div>
   </div>
 </div>
@@ -428,8 +539,8 @@
       Kamu akan dibawa ke halaman setup.
     </div>
     <div class="modal-actions">
-      <button class="btn-cancel" onclick="closeSettings()">Batal</button>
-      <button class="btn-confirm" onclick="goSetup()">Ke Halaman Setup</button>
+      <button class="btn-cancel" id="btnCloseSettings">Batal</button>
+      <button class="btn-confirm" id="btnGoSetup">Ke Halaman Setup</button>
     </div>
   </div>
 </div>
@@ -441,7 +552,7 @@
   <div class="modal" style="max-width:800px;max-height:90vh;overflow-y:auto;padding:28px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
       <h3 style="margin:0;">🛡 Panel Admin</h3>
-      <button class="btn-cancel" style="width:auto;padding:6px 14px;" onclick="closeAdmin()">✕ Tutup</button>
+      <button class="btn-cancel" style="width:auto;padding:6px 14px;" id="btnCloseAdmin">✕ Tutup</button>
     </div>
 
     <!-- STATS -->
@@ -466,8 +577,8 @@
 
     <!-- TABS -->
     <div class="welcome-tabs" style="margin-bottom:16px;">
-      <button class="welcome-tab active" onclick="switchAdminTab('users')">👥 Users</button>
-      <button class="welcome-tab" onclick="switchAdminTab('transactions')">💰 Transaksi</button>
+      <button class="welcome-tab active">👥 Users</button>
+      <button class="welcome-tab">💰 Transaksi</button>
     </div>
 
     <!-- TABEL USERS -->
@@ -516,20 +627,20 @@
     <div class="welcome-subtitle">QRIS Kasir Digital — Generate QR pembayaran dalam 1 klik. Daftar untuk menyimpan data kamu di server, atau lanjut tanpa akun.</div>
 
     <div class="welcome-tabs">
-      <button class="welcome-tab active" onclick="switchWelcomeTab('login')">🔑 Login</button>
-      <button class="welcome-tab" onclick="switchWelcomeTab('register')">📝 Daftar</button>
-      <button class="welcome-tab" onclick="switchWelcomeTab('guest')">👤 Guest</button>
+      <button class="welcome-tab active">🔑 Login</button>
+      <button class="welcome-tab">📝 Daftar</button>
+      <button class="welcome-tab">👤 Guest</button>
     </div>
 
     <!-- FORM LOGIN -->
-    <form class="welcome-form active" id="welcome-login" onsubmit="handleLogin(event)">
+    <form class="welcome-form active" id="welcome-login">
       <input type="text" id="loginUsername" placeholder="Username" autocomplete="username" required />
       <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" required />
       <button type="submit" class="btn-welcome primary" id="btnLogin">Masuk</button>
     </form>
 
     <!-- FORM REGISTER -->
-    <form class="welcome-form" id="welcome-register" onsubmit="handleRegister(event)">
+    <form class="welcome-form" id="welcome-register">
       <input type="text" id="regUsername" placeholder="Username (min 3 karakter)" autocomplete="username" required />
       <input type="password" id="regPassword" placeholder="Password (min 4 karakter)" autocomplete="new-password" required />
       <input type="password" id="regPassword2" placeholder="Konfirmasi password" autocomplete="new-password" required />
@@ -543,7 +654,7 @@
         Data QRIS & produk hanya disimpan di <strong style="color:var(--text)">browser ini</strong>.<br>
         Jika kamu ganti HP/PC atau hapus history browser,<br>kamu harus <strong style="color:var(--yellow)">setup ulang dari awal</strong>.
       </div>
-      <button class="btn-welcome guest" onclick="handleGuest()">🚀 Lanjut Tanpa Akun</button>
+      <button class="btn-welcome guest">🚀 Lanjut Tanpa Akun</button>
     </div>
 
     <div class="welcome-error" id="welcomeError"></div>
@@ -551,973 +662,6 @@
   </div>
 </div>
 
-<script>
-const API_URL = "/api";
-let config = { qrisString: '', products: [] };
-let transactions = [], currentProduct = null, currentFee = 0, currentTotal = 0;
-let authToken = null;      // JWT token
-let currentUser = null;    // { id, username, role }
-let isGuest = false;       // true jika user tidak login
-let isAdmin = false;       // true jika user role = admin
-
-const DEFAULT_PRODUCTS = [
-  { name: 'Voucher 1 Hari',  price: 6500 },
-  { name: 'Voucher 3 Hari',  price: 17000 },
-  { name: 'Voucher 7 Hari',  price: 35000 },
-  { name: 'Voucher 14 Hari', price: 68000 },
-  { name: 'Voucher 30 Hari', price: 110000 },
-];
-
-// ═══ HELPER: LOCAL STORAGE ═══
-function saveToLocal(key, value) {
-  try { localStorage.setItem('3qris_' + key, JSON.stringify(value)); } catch(e) {}
-}
-function loadFromLocal(key) {
-  try { const v = localStorage.getItem('3qris_' + key); return v ? JSON.parse(v) : null; } catch(e) { return null; }
-}
-function removeFromLocal(key) {
-  try { localStorage.removeItem('3qris_' + key); } catch(e) {}
-}
-
-// ═══ AUTH HEADERS ═══
-function authHeaders() {
-  if (!authToken) return {};
-  return { 'Authorization': 'Bearer ' + authToken, 'Content-Type': 'application/json' };
-}
-
-// ═══ API FETCH WRAPPER ═══
-async function apiFetch(url, options = {}) {
-  const headers = { ...authHeaders(), ...(options.headers || {}) };
-  const res = await fetch(url, { ...options, headers });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.error || 'Gagal ' + res.status);
-  }
-  return data;
-}
-
-// ── INIT ──
-window.addEventListener('load', async () => {
-  if (window.location.hash.startsWith('#pay=')) {
-    showPaymentPage(window.location.hash.slice(5));
-    return;
-  }
-
-  // Cek apakah ada token tersimpan
-  const savedToken = loadFromLocal('token');
-  if (savedToken) {
-    authToken = savedToken;
-    try {
-      // Verifikasi token ke server
-      const data = await apiFetch(API_URL + '/me');
-      currentUser = data.user;
-      isAdmin = data.user.role === 'admin';
-      isGuest = false;
-      await loadFromServer();
-      return;
-    } catch (e) {
-      // Token expired / invalid
-      authToken = null;
-      currentUser = null;
-      removeFromLocal('token');
-    }
-  }
-
-  // Cek apakah sebelumnya guest (ada data di localStorage)
-  const localConfig = loadFromLocal('config');
-  if (localConfig && localConfig.qrisString) {
-    // Guest returning user — langsung ke kasir dengan data lokal
-    isGuest = true;
-    config = localConfig;
-    const localTx = loadFromLocal('transactions') || [];
-    transactions = localTx;
-    renderKasir();
-    return;
-  }
-
-  // Tidak ada token & tidak ada data lokal → tampilkan welcome modal
-  showWelcomeModal();
-  startClock();
-});
-
-// ═══ WELCOME MODAL ═══
-function showWelcomeModal() {
-  document.getElementById('welcome-overlay').classList.add('open');
-  document.getElementById('setup-screen').style.display = 'flex';
-  document.getElementById('kasir-screen').style.display = 'none';
-  hideWelcomeMessages();
-  // Default: tab login
-  switchWelcomeTab('login');
-}
-
-function hideWelcomeModal() {
-  document.getElementById('welcome-overlay').classList.remove('open');
-}
-
-function hideWelcomeMessages() {
-  document.getElementById('welcomeError').style.display = 'none';
-  document.getElementById('welcomeSuccess').style.display = 'none';
-}
-
-function showWelcomeError(msg) {
-  const el = document.getElementById('welcomeError');
-  el.textContent = msg;
-  el.style.display = 'block';
-  document.getElementById('welcomeSuccess').style.display = 'none';
-}
-
-function showWelcomeSuccess(msg) {
-  const el = document.getElementById('welcomeSuccess');
-  el.textContent = msg;
-  el.style.display = 'block';
-  document.getElementById('welcomeError').style.display = 'none';
-}
-
-function switchWelcomeTab(tab) {
-  document.querySelectorAll('.welcome-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.welcome-form').forEach(f => f.classList.remove('active'));
-  hideWelcomeMessages();
-
-  if (tab === 'login') {
-    document.querySelector('.welcome-tab:nth-child(1)').classList.add('active');
-    document.getElementById('welcome-login').classList.add('active');
-    document.getElementById('loginUsername').focus();
-  } else if (tab === 'register') {
-    document.querySelector('.welcome-tab:nth-child(2)').classList.add('active');
-    document.getElementById('welcome-register').classList.add('active');
-    document.getElementById('regUsername').focus();
-  } else if (tab === 'guest') {
-    document.querySelector('.welcome-tab:nth-child(3)').classList.add('active');
-    document.getElementById('welcome-guest').classList.add('active');
-  }
-}
-
-async function handleLogin(e) {
-  e.preventDefault();
-  hideWelcomeMessages();
-  const username = document.getElementById('loginUsername').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  const btn = document.getElementById('btnLogin');
-
-  if (!username || !password) {
-    showWelcomeError('Username dan password wajib diisi');
-    return;
-  }
-
-  btn.textContent = 'Memproses...';
-  btn.disabled = true;
-
-  try {
-    const res = await fetch(API_URL + '/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    });
-    const data = await res.json();
-
-    if (!res.ok) {
-      showWelcomeError(data.error || 'Login gagal');
-      btn.textContent = 'Masuk';
-      btn.disabled = false;
-      return;
-    }
-
-    // Login sukses
-    authToken = data.token;
-    currentUser = data.user;
-    isAdmin = data.user.role === 'admin';
-    isGuest = false;
-    saveToLocal('token', authToken);
-    hideWelcomeModal();
-    await loadFromServer();
-  } catch (err) {
-    showWelcomeError('Gagal terhubung ke server. Pastikan server berjalan.');
-    btn.textContent = 'Masuk';
-    btn.disabled = false;
-  }
-}
-
-async function handleRegister(e) {
-  e.preventDefault();
-  hideWelcomeMessages();
-  const username = document.getElementById('regUsername').value.trim();
-  const password = document.getElementById('regPassword').value;
-  const password2 = document.getElementById('regPassword2').value;
-  const btn = document.getElementById('btnRegister');
-
-  if (!username || !password) {
-    showWelcomeError('Username dan password wajib diisi');
-    return;
-  }
-  if (username.length < 3) {
-    showWelcomeError('Username minimal 3 karakter');
-    return;
-  }
-  if (password.length < 4) {
-    showWelcomeError('Password minimal 4 karakter');
-    return;
-  }
-  if (password !== password2) {
-    showWelcomeError('Konfirmasi password tidak cocok');
-    return;
-  }
-
-  btn.textContent = 'Mendaftarkan...';
-  btn.disabled = true;
-
-  try {
-    const res = await fetch(API_URL + '/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    });
-    const data = await res.json();
-
-    if (!res.ok) {
-      showWelcomeError(data.error || 'Pendaftaran gagal');
-      btn.textContent = 'Daftar Sekarang';
-      btn.disabled = false;
-      return;
-    }
-
-    // Registrasi sukses
-    authToken = data.token;
-    currentUser = data.user;
-    isAdmin = data.user.role === 'admin';
-    isGuest = false;
-    saveToLocal('token', authToken);
-    showWelcomeSuccess('✅ Pendaftaran berhasil! Silakan setup QRIS dan produk kamu.');
-    btn.textContent = 'Daftar Sekarang';
-    btn.disabled = false;
-
-    // Redirect ke setup setelah 1.5 detik
-    setTimeout(() => {
-      hideWelcomeModal();
-      document.getElementById('setup-screen').style.display = 'flex';
-      document.getElementById('kasir-screen').style.display = 'none';
-      renderProductRows(DEFAULT_PRODUCTS);
-    }, 1500);
-  } catch (err) {
-    showWelcomeError('Gagal terhubung ke server. Pastikan server berjalan.');
-    btn.textContent = 'Daftar Sekarang';
-    btn.disabled = false;
-  }
-}
-
-function handleGuest() {
-  isGuest = true;
-  authToken = null;
-  currentUser = null;
-  removeFromLocal('token');
-  hideWelcomeModal();
-
-  // Tampilkan setup screen
-  document.getElementById('setup-screen').style.display = 'flex';
-  document.getElementById('kasir-screen').style.display = 'none';
-
-  // Load dari localStorage jika ada
-  const localConfig = loadFromLocal('config');
-  if (localConfig && localConfig.products) {
-    renderProductRows(localConfig.products);
-    document.getElementById('qrisManual').value = localConfig.qrisString || '';
-  } else {
-    renderProductRows(DEFAULT_PRODUCTS);
-  }
-}
-
-async function loadFromServer() {
-  try {
-    // Load config dari server
-    const data = await apiFetch(API_URL + '/load');
-    if (data && data.qrisString) {
-      config = data;
-      renderKasir();
-    } else {
-      // Belum ada config → tampilkan setup
-      document.getElementById('setup-screen').style.display = 'flex';
-      document.getElementById('kasir-screen').style.display = 'none';
-      renderProductRows(DEFAULT_PRODUCTS);
-    }
-
-    // Load transaksi dari server
-    try {
-      const txData = await apiFetch(API_URL + '/transactions');
-      if (txData) {
-        transactions = txData.map(tx => ({
-          name: tx.product,
-          price: tx.price,
-          time: tx.date,
-          fee: 0
-        }));
-        renderTxLog();
-      }
-    } catch(e) {
-      console.log('Gagal load transaksi:', e);
-    }
-  } catch (e) {
-    console.error('Gagal load dari server:', e);
-    // Fallback: tampilkan setup
-    document.getElementById('setup-screen').style.display = 'flex';
-    document.getElementById('kasir-screen').style.display = 'none';
-    renderProductRows(DEFAULT_PRODUCTS);
-  }
-}
-
-// ═══ LOGOUT ═══
-function handleLogout() {
-  if (!confirm('Yakin ingin logout?\n\n' + (isGuest ? 'Data guest akan tetap tersimpan di browser ini.' : 'Data kamu aman di server, login lagi untuk mengakses.'))) return;
-
-  if (isGuest) {
-    // Guest: simpan config terakhir ke localStorage sebelum logout
-    saveToLocal('config', config);
-    saveToLocal('transactions', transactions);
-  }
-
-  authToken = null;
-  currentUser = null;
-  isGuest = false;
-  removeFromLocal('token');
-  config = { qrisString: '', products: [] };
-  transactions = [];
-  currentProduct = null;
-  currentFee = 0;
-
-  document.getElementById('kasir-screen').style.display = 'none';
-  document.getElementById('setup-screen').style.display = 'flex';
-  showWelcomeModal();
-}
-
-// ── PAYMENT PAGE ──
-function showPaymentPage(encoded) {
-  document.getElementById('setup-screen').style.display   = 'none';
-  document.getElementById('kasir-screen').style.display   = 'none';
-  document.getElementById('payment-screen').style.display = 'flex';
-  try {
-    const data = JSON.parse(atob(encoded));
-    document.title = 'Bayar ' + data.name + ' · 3QRIS';
-    document.getElementById('payProductName').textContent   = data.name;
-    document.getElementById('payAmountDisplay').textContent = 'Rp ' + data.price.toLocaleString('id-ID');
-    const box = document.getElementById('payment-qr-box');
-    box.innerHTML = '';
-    new QRCode(box, { text: data.qris, width: 240, height: 240, colorDark: '#000', colorLight: '#fff', correctLevel: QRCode.CorrectLevel.M });
-    window._payData = data;
-  } catch(e) {
-    document.getElementById('paymentContent').innerHTML = `
-      <div class="pay-error">
-        <div class="exp-icon">❌</div>
-        <h3>Link Tidak Valid</h3>
-        <p>Link pembayaran ini rusak atau sudah tidak berlaku.<br>Minta link baru dari penjual.</p>
-      </div>`;
-  }
-}
-
-function downloadPaymentQR() {
-  const canvas = document.querySelector('#payment-qr-box canvas');
-  if (!canvas) return;
-  const pad = 20, c2 = document.createElement('canvas');
-  c2.width = canvas.width + pad*2; c2.height = canvas.height + pad*2;
-  const ctx = c2.getContext('2d');
-  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,c2.width,c2.height);
-  ctx.drawImage(canvas, pad, pad);
-  const a = document.createElement('a');
-  a.download = '3qris-' + ((window._payData?.name || 'bayar').replace(/\s+/g,'-')) + '.png';
-  a.href = c2.toDataURL('image/png'); a.click();
-}
-
-// ── CLOCK ──
-function startClock() {
-  const el = document.getElementById('clockDisplay');
-  if (!el) return;
-  const tick = () => el.textContent = new Date().toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
-  tick(); setInterval(tick, 1000);
-}
-
-// ── SETUP ──
-let rowId = 0;
-function renderProductRows(products) { document.getElementById('productList').innerHTML = ''; products.forEach(p => addProductRow(p.name, p.price)); }
-function addProductRow(name='', price='') {
-  const id = rowId++;
-  const row = document.createElement('div');
-  row.className = 'product-row'; row.id = 'row-' + id;
-  row.innerHTML = `<input type="text" placeholder="Nama produk" value="${name}" class="name-input" /><input type="number" placeholder="Harga" value="${price}" class="price" min="1" /><button class="btn-icon" onclick="removeRow('row-${id}')">✕</button>`;
-  document.getElementById('productList').appendChild(row);
-}
-function removeRow(id) { document.getElementById(id)?.remove(); }
-function getProductsFromForm() {
-  return [...document.querySelectorAll('#productList .product-row')].reduce((acc, row) => {
-    const name = row.querySelector('.name-input').value.trim(), price = parseInt(row.querySelector('.price').value);
-    if (name && price > 0) acc.push({ name, price }); return acc;
-  }, []);
-}
-
-// ── UPLOAD & AUTO-SCAN ──
-const _zone = document.getElementById('uploadZone');
-const _input = document.getElementById('fileInput');
-
-_zone.addEventListener('click', () => _input.click());
-_input.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
-
-_zone.addEventListener('dragenter', e => { e.preventDefault(); e.stopPropagation(); _zone.classList.add('drag-over'); });
-_zone.addEventListener('dragover',  e => { e.preventDefault(); e.stopPropagation(); _zone.classList.add('drag-over'); });
-_zone.addEventListener('dragleave', e => { e.preventDefault(); e.stopPropagation(); _zone.classList.remove('drag-over'); });
-_zone.addEventListener('drop', e => {
-  e.preventDefault(); e.stopPropagation();
-  _zone.classList.remove('drag-over');
-  const file = e.dataTransfer.files[0];
-  if (file) handleFile(file);
-});
-
-document.addEventListener('dragover', e => e.preventDefault());
-document.addEventListener('drop',     e => e.preventDefault());
-
-function handleFile(file) {
-  if (!file.type.startsWith('image/')) { showErr('Format harus JPG/PNG/WEBP'); return; }
-  document.getElementById('uploadLabel').textContent = '✓ ' + file.name;
-  const url = URL.createObjectURL(file);
-  autoScan(url, true);
-}
-
-function autoScan(src, isObjectUrl) {
-  setScanStatus('scanning', '⏳ Scanning...');
-  const img = new Image();
-  img.onload = () => {
-    const MAX = 600;
-    let w = img.width, h = img.height;
-    if (w > MAX || h > MAX) {
-      if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-      else       { w = Math.round(w * MAX / h); h = MAX; }
-    }
-    const c = document.createElement('canvas');
-    c.width = w; c.height = h;
-    const ctx = c.getContext('2d');
-    ctx.drawImage(img, 0, 0, w, h);
-    const d = ctx.getImageData(0, 0, w, h);
-    if (isObjectUrl) URL.revokeObjectURL(src);
-    const code = jsQR(d.data, d.width, d.height, { inversionAttempts: 'dontInvert' });
-    if (code && code.data.startsWith('000201')) {
-      document.getElementById('qrisManual').value = code.data;
-      setScanStatus('ok', '✓ QRIS berhasil dibaca!');
-      playSound('success');
-    } else {
-      if (w < img.width) {
-        const c2 = document.createElement('canvas');
-        c2.width = img.width; c2.height = img.height;
-        c2.getContext('2d').drawImage(img, 0, 0);
-        const d2 = c2.getContext('2d').getImageData(0, 0, img.width, img.height);
-        const code2 = jsQR(d2.data, d2.width, d2.height, { inversionAttempts: 'attemptBoth' });
-        if (code2 && code2.data.startsWith('000201')) {
-          document.getElementById('qrisManual').value = code2.data;
-          setScanStatus('ok', '✓ QRIS berhasil dibaca!');
-          playSound('success');
-          return;
-        }
-      }
-      setScanStatus('fail', '✗ Tidak terbaca — paste manual');
-      playSound('error');
-    }
-  };
-  img.src = src;
-}
-
-function setScanStatus(type, msg) { const el = document.getElementById('scanStatus'); el.textContent = msg; el.className = 'scan-status ' + type; }
-
-// ── SOUND EFFECTS ──
-function playSound(type) {
-  if (!document.getElementById('soundEnabled')?.checked) return;
-  const ctx = new (window.AudioContext || window.webkitAudioContext)();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain); gain.connect(ctx.destination);
-  
-  if (type === 'success') {
-    osc.frequency.setValueAtTime(523, ctx.currentTime);
-    osc.frequency.setValueAtTime(659, ctx.currentTime + 0.1);
-    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3);
-  } else if (type === 'error') {
-    osc.frequency.setValueAtTime(200, ctx.currentTime);
-    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
-    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.2);
-  } else if (type === 'click') {
-    osc.frequency.setValueAtTime(800, ctx.currentTime);
-    gain.gain.setValueAtTime(0.05, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.1);
-  }
-}
-
-// ── START KASIR ──
-function startKasir() {
-  const qris = document.getElementById('qrisManual').value.trim();
-  const products = getProductsFromForm();
-  hideErr();
-  if (!qris || !qris.startsWith('000201')) { showErr('QRIS string tidak valid'); return; }
-  if (!products.length) { showErr('Tambahkan minimal 1 produk'); return; }
-  config = { qrisString: qris, products };
-
-  if (isGuest) {
-    // Guest mode: simpan ke localStorage
-    saveToLocal('config', config);
-    renderKasir();
-  } else {
-    // Logged in: simpan ke server
-    fetch(API_URL + "/save", {
-      method: "POST",
-      headers: authHeaders(),
-      body: JSON.stringify(config)
-    })
-    .then(res => res.json())
-    .then(() => {
-      renderKasir();
-    })
-    .catch(() => {
-      showErr("Gagal simpan ke server");
-    });
-  }
-}
-
-// ── RENDER KASIR ──
-function renderKasir() {
-  document.getElementById('setup-screen').style.display = 'none';
-  document.getElementById('kasir-screen').style.display = 'flex';
-
-  // Tampilkan badge user/guest
-  if (isGuest) {
-    document.getElementById('guestBadge').style.display = 'inline';
-    document.getElementById('userBadge').style.display = 'none';
-    document.getElementById('btnAdmin').style.display = 'none';
-  } else if (currentUser) {
-    document.getElementById('userBadge').textContent = (isAdmin ? '🛡 ' : '🔒 ') + currentUser.username;
-    document.getElementById('userBadge').style.display = 'inline';
-    document.getElementById('guestBadge').style.display = 'none';
-    document.getElementById('btnAdmin').style.display = isAdmin ? 'inline-block' : 'none';
-  } else {
-    document.getElementById('userBadge').style.display = 'none';
-    document.getElementById('guestBadge').style.display = 'none';
-    document.getElementById('btnAdmin').style.display = 'none';
-  }
-
-  startClock();
-  renderProductGrid();
-}
-
-function renderProductGrid(filter = '') {
-  const grid = document.getElementById('kasirProductGrid'); 
-  grid.innerHTML = '';
-  
-  // Filter produk
-  const filtered = config.products.filter(p => 
-    p.name.toLowerCase().includes(filter.toLowerCase())
-  );
-  
-  filtered.forEach(p => {
-    const card = document.createElement('div'); 
-    card.className = 'product-card'; 
-    card.onclick = () => { playSound('click'); selectProduct(p, card); };
-    card.innerHTML = `
-      <div class="tap-hint">TAP UNTUK GENERATE</div>
-      <div class="prod-name">${p.name}</div>
-      <div class="prod-price">Rp ${p.price.toLocaleString('id-ID')}</div>
-      <div class="tap-arrow">↗</div>
-    `;
-    grid.appendChild(card);
-  });
-  
-  // Tambah card "Nominal Custom"
-  const customCard = document.createElement('div');
-  customCard.className = 'custom-nominal-card';
-  customCard.onclick = () => { playSound('click'); openNominalModal(); };
-  customCard.innerHTML = `
-    <div class="icon">💰</div>
-    <div class="label">Nominal Custom</div>
-    <div class="sub">Masukkan jumlah sendiri</div>
-  `;
-  grid.appendChild(customCard);
-}
-
-// ── SEARCH FILTER ──
-function filterProducts() {
-  const query = document.getElementById('searchInput').value;
-  renderProductGrid(query);
-}
-
-// ── NOMINAL CUSTOM MODAL ──
-function openNominalModal() {
-  document.getElementById('nominalModal').classList.add('open');
-  document.getElementById('customNominalInput').value = '';
-  setTimeout(() => document.getElementById('customNominalInput').focus(), 100);
-}
-
-function closeNominalModal() {
-  document.getElementById('nominalModal').classList.remove('open');
-}
-
-function setQuickNominal(amount) {
-  document.getElementById('customNominalInput').value = amount;
-}
-
-function confirmCustomNominal() {
-  const amount = parseInt(document.getElementById('customNominalInput').value) || 0;
-  if (amount <= 0) return;
-  closeNominalModal();
-  
-  // Buat produk virtual
-  const virtualProduct = { name: 'Nominal Custom', price: amount };
-  currentProduct = virtualProduct;
-  
-  // Reset fee
-  currentFee = 0;
-  document.getElementById('feeEnabled').checked = false;
-  document.getElementById('feeOptions').classList.remove('show');
-  document.getElementById('feeSummary').style.display = 'none';
-  
-  document.getElementById('qrEmpty').style.display = 'none';
-  document.getElementById('qrResult').style.display = 'none';
-  document.getElementById('qrLoading').style.display = 'flex';
-  setTimeout(() => generateDynamicQR(virtualProduct), 300);
-}
-
-// ── SELECT PRODUCT ──
-function selectProduct(product, cardEl) {
-  document.querySelectorAll('.product-card').forEach(c => c.classList.remove('selected'));
-  cardEl.classList.add('selected'); 
-  currentProduct = product;
-  
-  // Reset fee
-  currentFee = 0;
-  document.getElementById('feeEnabled').checked = false;
-  document.getElementById('feeOptions').classList.remove('show');
-  document.getElementById('feeSummary').style.display = 'none';
-  
-  document.getElementById('qrEmpty').style.display = 'none';
-  document.getElementById('qrResult').style.display = 'none';
-  document.getElementById('qrLoading').style.display = 'flex';
-  setTimeout(() => generateDynamicQR(product), 300);
-}
-
-// ── FEE LAYANAN ──
-function toggleFee() {
-  const enabled = document.getElementById('feeEnabled').checked;
-  document.getElementById('feeOptions').classList.toggle('show', enabled);
-  if (!enabled) {
-    currentFee = 0;
-    document.getElementById('feeCustom').classList.remove('show');
-    document.getElementById('feeSummary').style.display = 'none';
-    if (currentProduct) generateDynamicQR(currentProduct);
-  }
-}
-
-function setFee(amount) {
-  currentFee = amount;
-  document.querySelectorAll('.fee-btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
-  document.getElementById('feeCustom').classList.remove('show');
-  updateFeeSummary();
-  if (currentProduct) generateDynamicQR(currentProduct);
-}
-
-function showCustomFee() {
-  document.querySelectorAll('.fee-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('feeCustom').classList.add('show');
-  document.getElementById('feeCustomInput').focus();
-}
-
-function applyCustomFee() {
-  const fee = parseInt(document.getElementById('feeCustomInput').value) || 0;
-  if (fee > 0) {
-    currentFee = fee;
-    updateFeeSummary();
-    if (currentProduct) generateDynamicQR(currentProduct);
-  }
-}
-
-function updateFeeSummary() {
-  if (!currentProduct) return;
-  const base = currentProduct.price;
-  const total = base + currentFee;
-  document.getElementById('feeBase').textContent = 'Rp ' + base.toLocaleString('id-ID');
-  document.getElementById('feeAmount').textContent = 'Rp ' + currentFee.toLocaleString('id-ID');
-  document.getElementById('feeTotal').textContent = 'Rp ' + total.toLocaleString('id-ID');
-  document.getElementById('feeSummary').style.display = 'block';
-}
-
-// ── QRIS ENGINE ──
-function crc16(str) {
-  let crc = 0xFFFF;
-  for (let i = 0; i < str.length; i++) { 
-    crc ^= str.charCodeAt(i) << 8; 
-    for (let j = 0; j < 8; j++) { 
-      crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : crc << 1; 
-      crc &= 0xFFFF; 
-    } 
-  }
-  return crc.toString(16).toUpperCase().padStart(4, '0');
-}
-
-function convertMinimal(staticStr, amount) {
-  let body = staticStr.trim().slice(0, -8);
-  body = body.replace('010211', '010212');
-  body = body.replace(/54\d{2}\d+(?=5[5-9]|6[0-9]|8[0-9])/, '');
-  const amtStr = String(amount), tag54 = '54' + String(amtStr.length).padStart(2,'0') + amtStr;
-  body = body.includes('5802ID') ? body.replace('5802ID', tag54 + '5802ID') : body + tag54;
-  const w = body + '6304'; 
-  return w + crc16(w);
-}
-
-function generateDynamicQR(product) {
-  const totalAmount = product.price + currentFee;
-  currentTotal = totalAmount;
-  const result = convertMinimal(config.qrisString, totalAmount);
-  if (crc16(result.slice(0,-4)) !== result.slice(-4)) { 
-    alert('CRC tidak valid.'); 
-    document.getElementById('qrLoading').style.display='none'; 
-    document.getElementById('qrEmpty').style.display='block'; 
-    return; 
-  }
-  showQR(result, product, totalAmount);
-}
-
-// ── SHOW QR ──
-function showQR(qrisString, product, totalAmount) {
-  const box = document.getElementById('qr-box'); 
-  box.innerHTML = '';
-  new QRCode(box, { text: qrisString, width: 230, height: 230, colorDark: '#000', colorLight: '#fff', correctLevel: QRCode.CorrectLevel.M });
-  
-  const displayName = currentFee > 0 ? `${product.name} + Fee` : product.name;
-  document.getElementById('qrProductBadge').textContent = displayName;
-  document.getElementById('qrAmount').textContent = 'Rp ' + totalAmount.toLocaleString('id-ID');
-  document.getElementById('qrLoading').style.display = 'none';
-  document.getElementById('qrResult').style.display  = 'flex';
-
-  // Update fee summary
-  if (currentFee > 0) updateFeeSummary();
-
-  // Build payment link
-  const payload = btoa(JSON.stringify({ qris: qrisString, name: displayName, price: totalAmount }));
-  const link = window.location.origin + window.location.pathname + '#pay=' + payload;
-  document.getElementById('paymentLinkInput').value = link;
-  const btn = document.getElementById('btnCopyLink'); 
-  btn.textContent = '📋 Copy'; 
-  btn.classList.remove('copied');
-
-  addTransaction(product, totalAmount);
-  document.getElementById('qrResult').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  playSound('success');
-}
-
-// ── COPY PAYMENT LINK ──
-function copyPaymentLink() {
-  const link = document.getElementById('paymentLinkInput').value;
-  navigator.clipboard.writeText(link).then(() => {
-    const btn = document.getElementById('btnCopyLink'); 
-    btn.textContent = '✓ Tersalin!'; 
-    btn.classList.add('copied');
-    setTimeout(() => { btn.textContent = '📋 Copy'; btn.classList.remove('copied'); }, 2500);
-  });
-}
-
-// ── ACTIONS ──
-function downloadQR() {
-  const canvas = document.querySelector('#qr-box canvas'); 
-  if (!canvas) return;
-  const pad=20, c2=document.createElement('canvas'); 
-  c2.width=canvas.width+pad*2; 
-  c2.height=canvas.height+pad*2;
-  const ctx=c2.getContext('2d'); 
-  ctx.fillStyle='#fff'; 
-  ctx.fillRect(0,0,c2.width,c2.height); 
-  ctx.drawImage(canvas,pad,pad);
-  const a=document.createElement('a'); 
-  a.download='3qris-'+currentProduct.name.replace(/\s+/g,'-')+'.png'; 
-  a.href=c2.toDataURL('image/png'); 
-  a.click();
-}
-
-function nextTransaction() {
-  document.getElementById('qrResult').style.display='none'; 
-  document.getElementById('qrEmpty').style.display='block';
-  document.querySelectorAll('.product-card').forEach(c=>c.classList.remove('selected')); 
-  currentProduct=null;
-  currentFee = 0;
-  document.getElementById('feeEnabled').checked = false;
-  document.getElementById('feeOptions').classList.remove('show');
-  document.getElementById('feeSummary').style.display = 'none';
-}
-
-function addTransaction(product, totalAmount) {
-  const time = new Date().toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
-
-  const tx = {
-    name: product.name,
-    price: totalAmount,
-    time,
-    fee: currentFee
-  };
-
-  // 👉 simpan ke memory (biar langsung tampil)
-  transactions.unshift(tx);
-  if (transactions.length > 20) transactions.pop();
-
-  renderTxLog();
-
-  // 🔥 SIMPAN KE BACKEND / LOCAL
-  if (isGuest) {
-    saveToLocal('transactions', transactions);
-  } else {
-    fetch(API_URL + "/transaction", {
-      method: "POST",
-      headers: authHeaders(),
-      body: JSON.stringify(tx)
-    }).catch(err => console.log("Gagal simpan transaksi:", err));
-  }
-}
-
-function renderTxLog() {
-  const list = document.getElementById('txList');
-  if (!transactions.length) { 
-    list.innerHTML = '<div class="tx-empty">Belum ada transaksi</div>'; 
-    return; 
-  }
-  list.innerHTML = transactions.map(tx => `
-    <div class="tx-item">
-      <div>
-        <div class="tx-name">${tx.name}${tx.fee > 0 ? ' <span style="color:var(--yellow);font-size:11px;">+Fee</span>' : ''}</div>
-        <div class="tx-time">${tx.time}</div>
-      </div>
-      <div class="tx-price">Rp ${tx.price.toLocaleString('id-ID')}</div>
-    </div>
-  `).join('');
-}
-
-function openSettings()  { document.getElementById('settingsModal').classList.add('open'); }
-function closeSettings() { document.getElementById('settingsModal').classList.remove('open'); }
-function goSetup() {
-  closeSettings(); 
-  document.getElementById('kasir-screen').style.display='none'; 
-  document.getElementById('setup-screen').style.display='flex';
-  document.getElementById('qrisManual').value=config.qrisString; 
-  document.getElementById('productList').innerHTML='';
-  config.products.forEach(p => addProductRow(p.name, p.price));
-  
-  // Guest: hapus data lama dari localStorage agar bisa setup ulang
-  if (isGuest) {
-    removeFromLocal('config');
-  }
-}
-function showErr(msg) { const el=document.getElementById('errMsg'); el.textContent=msg; el.style.display='block'; }
-function hideErr()    { document.getElementById('errMsg').style.display='none'; }
-
-// ═══ ADMIN PANEL ═══
-function openAdmin() {
-  document.getElementById('adminModal').classList.add('open');
-  loadAdminStats();
-  switchAdminTab('users');
-}
-
-function closeAdmin() {
-  document.getElementById('adminModal').classList.remove('open');
-}
-
-function switchAdminTab(tab) {
-  document.querySelectorAll('#adminModal .welcome-tab').forEach((t, i) => {
-    t.classList.toggle('active', (tab === 'users' && i === 0) || (tab === 'transactions' && i === 1));
-  });
-  document.getElementById('adminTabUsers').style.display = tab === 'users' ? '' : 'none';
-  document.getElementById('adminTabTransactions').style.display = tab === 'transactions' ? '' : 'none';
-
-  if (tab === 'users') loadAdminUsers();
-  if (tab === 'transactions') loadAdminTransactions();
-}
-
-async function loadAdminStats() {
-  try {
-    const data = await apiFetch(API_URL + '/admin/stats');
-    document.getElementById('statUsers').textContent = data.totalUsers || 0;
-    document.getElementById('statTx').textContent = data.totalTransactions || 0;
-    document.getElementById('statRevenue').textContent = 'Rp ' + (data.totalRevenue || 0).toLocaleString('id-ID');
-    document.getElementById('statToday').textContent = 'Rp ' + (data.todayRevenue || 0).toLocaleString('id-ID');
-  } catch (e) {
-    console.error('Gagal load stats:', e);
-  }
-}
-
-async function loadAdminUsers() {
-  const tbody = document.getElementById('adminUsersBody');
-  tbody.innerHTML = '<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--muted);">Loading...</td></tr>';
-  try {
-    const users = await apiFetch(API_URL + '/admin/users');
-    if (!users.length) {
-      tbody.innerHTML = '<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--muted);">Belum ada user</td></tr>';
-      return;
-    }
-    tbody.innerHTML = users.map(u => `
-      <tr style="border-bottom:1px solid var(--border);">
-        <td style="padding:10px 8px;font-weight:600;">${u.username}</td>
-        <td style="padding:10px 8px;text-align:center;">
-          <span style="font-size:11px;padding:3px 8px;border-radius:99px;${u.role === 'admin' ? 'background:rgba(234,179,8,0.15);color:var(--yellow);border:1px solid rgba(234,179,8,0.3);' : 'background:rgba(59,130,246,0.1);color:var(--accent-g);border:1px solid rgba(59,130,246,0.2);'}">${u.role === 'admin' ? '🛡 Admin' : '👤 User'}</span>
-        </td>
-        <td style="padding:10px 8px;text-align:center;font-family:'JetBrains Mono',monospace;">${u.tx_count || 0}</td>
-        <td style="padding:10px 8px;text-align:right;font-family:'JetBrains Mono',monospace;color:var(--green);">Rp ${(u.total_revenue || 0).toLocaleString('id-ID')}</td>
-        <td style="padding:10px 8px;text-align:center;">
-          ${u.role === 'user'
-            ? `<button style="font-size:11px;padding:4px 10px;background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.3);color:var(--yellow);border-radius:6px;cursor:pointer;" onclick="promoteUser(${u.id},'${u.username}')">⬆ Admin</button>`
-            : u.id !== currentUser.id
-              ? `<button style="font-size:11px;padding:4px 10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#fca5a5;border-radius:6px;cursor:pointer;" onclick="demoteUser(${u.id},'${u.username}')">⬇ User</button>`
-              : `<span style="font-size:11px;color:var(--muted);">(kamu)</span>`
-          }
-        </td>
-      </tr>
-    `).join('');
-  } catch (e) {
-    tbody.innerHTML = '<tr><td colspan="5" style="padding:20px;text-align:center;color:#fca5a5;">Gagal load data</td></tr>';
-  }
-}
-
-async function loadAdminTransactions() {
-  const tbody = document.getElementById('adminTxBody');
-  tbody.innerHTML = '<tr><td colspan="4" style="padding:20px;text-align:center;color:var(--muted);">Loading...</td></tr>';
-  try {
-    const txs = await apiFetch(API_URL + '/admin/transactions');
-    if (!txs.length) {
-      tbody.innerHTML = '<tr><td colspan="4" style="padding:20px;text-align:center;color:var(--muted);">Belum ada transaksi</td></tr>';
-      return;
-    }
-    tbody.innerHTML = txs.map(tx => `
-      <tr style="border-bottom:1px solid var(--border);">
-        <td style="padding:10px 8px;font-weight:600;font-size:11px;">${tx.username || 'user#'+tx.user_id}</td>
-        <td style="padding:10px 8px;">${tx.product}</td>
-        <td style="padding:10px 8px;text-align:right;font-family:'JetBrains Mono',monospace;color:var(--green);font-size:11px;">Rp ${(tx.price || 0).toLocaleString('id-ID')}</td>
-        <td style="padding:10px 8px;text-align:right;color:var(--muted);font-size:11px;">${tx.date || '-'}</td>
-      </tr>
-    `).join('');
-  } catch (e) {
-    tbody.innerHTML = '<tr><td colspan="4" style="padding:20px;text-align:center;color:#fca5a5;">Gagal load data</td></tr>';
-  }
-}
-
-async function promoteUser(userId, username) {
-  if (!confirm(`Promosikan "${username}" menjadi Admin?`)) return;
-  try {
-    await apiFetch(API_URL + '/admin/promote/' + userId, { method: 'POST' });
-    loadAdminUsers();
-    loadAdminStats();
-  } catch (e) {
-    alert('Gagal: ' + e.message);
-  }
-}
-
-async function demoteUser(userId, username) {
-  if (!confirm(`Turunkan "${username}" dari Admin menjadi User?`)) return;
-  try {
-    await apiFetch(API_URL + '/admin/demote/' + userId, { method: 'POST' });
-    loadAdminUsers();
-    loadAdminStats();
-  } catch (e) {
-    alert('Gagal: ' + e.message);
-  }
-}
-</script>
+<script src="/public/app.js"></script>
 </body>
 </html>

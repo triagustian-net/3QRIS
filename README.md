@@ -1,66 +1,153 @@
-# 3QRIS Kasir 🔄
-
-**Ubah QRIS Statis menjadi QRIS Dinamis untuk Kasir Digital**
-
-3QRIS Kasir adalah aplikasi web berbasis Node.js + Express + SQLite yang memungkinkan Anda mengonversi **QRIS statis** menjadi **QRIS dinamis** dengan nominal harga sesuai produk yang dipilih pelanggan. Cocok untuk warung, UMKM, atau toko kecil.
+<div align="center">
+  <h1>3QRIS Kasir 🔒</h1>
+  <p><strong>Ubah QRIS Statis menjadi QRIS Dinamis — 1 Klik</strong></p>
+  <p>
+    Express.js + SQLite + Vanilla JS · Zero QR API dependencies · Dark theme
+  </p>
+  <p>
+    <a href="#fitur">Fitur</a> •
+    <a href="#demo-cara-pakai">Demo</a> •
+    <a href="#installasi">Install</a> •
+    <a href="#api-endpoints">API</a> •
+    <a href="#tech-stack">Tech Stack</a> •
+    <a href="#lisensi">Lisensi</a>
+  </p>
+  <br>
+</div>
 
 ---
 
-## ✨ Fitur Utama
+**3QRIS Kasir** adalah aplikasi kasir digital berbasis web yang mengonversi **QRIS statis** (satu QR untuk semua transaksi) menjadi **QRIS dinamis** (QR khusus dengan nominal sesuai produk yang dipilih pelanggan). Tanpa API pihak ketiga — semua QR di-generate di server sendiri.
 
-### 🔐 Autentikasi & Multi-User
-- **Welcome Modal** — Popup pertama buka: Login, Daftar, atau Guest mode
-- **JWT Authentication** — Token-based login dengan bcrypt password hashing
+Cocok untuk **warung, UMKM, toko kecil, atau siapa pun** yang mau menerima pembayaran QRIS tanpa ribet setup mPOS/integrasi bank.
+
+---
+
+## ✨ Fitur
+
+### 🔐 Autentikasi
+- **Login / Register** — Akun tersimpan di server, bisa dipakai di perangkat mana pun
 - **Guest Mode** — Langsung pakai tanpa daftar, data disimpan di localStorage browser
 - **Role System** — Admin & User, user pertama otomatis jadi admin
+- **JWT Authentication** — Token-based, bcrypt password hashing
 
-### 🛡 Panel Admin
-- **Dashboard Statistik** — Total user, transaksi, revenue, transaksi hari ini
-- **Manajemen User** — Lihat semua user + jumlah transaksi + revenue per user
-- **Promote/Demote** — Admin bisa naikkan user jadi admin, atau turunkan admin lain
-- **Semua Transaksi** — Lihat seluruh riwayat transaksi dari semua user
-
-### 🛒 Fitur Kasir
-- **📷 Scan QRIS Statis** — Upload gambar QRIS, otomatis discan pakai jsQR
-- **📝 Paste Manual** — Bisa juga paste raw string QRIS langsung
-- **🛒 Manajemen Produk** — Tambah/hapus daftar produk dengan harga
-- **🔗 Generate QRIS Dinamis** — Tap produk → langsung generate QRIS baru dengan nominal sesuai
-- **💰 Fee Layanan** — Opsi biaya layanan (Rp 500 - Custom)
-- **🔗 Link Pembayaran** — Copy link untuk dikirim ke pelanggan via WhatsApp / embed di website
-- **🧾 Riwayat Transaksi** — Tersimpan di database (login) atau localStorage (guest)
-- **🔍 Filter Pencarian** — Cari produk cepat
+### 🛒 Kasir
+- **📷 Scan QRIS Statis** — Upload gambar QRIS, auto-scan pakai jsQR di browser
+- **📝 Paste Manual** — Atau paste raw string QRIS (mulai `000201...`)
+- **⚡ 1 Klik Generate QR** — Tap produk → QRIS dinamis dengan nominal muncul
+- **💰 Fee Layanan** — Tambah biaya layanan ke customer (Rp 500 – Custom)
+- **🔗 Link Pembayaran** — Copy link untuk WA atau embed di website toko
+- **🔍 Cari Produk** — Filter cepat dari daftar produk
 - **🔊 Sound Effect** — Notifikasi suara tiap transaksi
-- **🌙 Tampilan Modern** — UI dark mode, gradient, responsif mobile
-- **📱 Halaman Pembayaran** — Halaman khusus untuk pelanggan scan QR & nominal
+- **🛒 Manajemen Produk** — Tambah/hapus produk dengan harga
+
+### 🛡 Admin Panel
+- **Dashboard Statistik** — Total user, transaksi, revenue, transaksi hari ini
+- **Manajemen User** — Lihat semua user + jumlah transaksi + revenue
+- **Promote/Demote** — Naikkan user jadi admin, atau turunkan admin lain
+- **Semua Transaksi** — Riwayat transaksi dari semua user
+
+### 🎨 Tampilan
+- **🌙 Dark Theme** — Modern, gradien, enak dipandang
+- **📱 Responsive** — Otomatis menyesuaikan HP, tablet, & desktop
+- **🖥 SPA** — Single Page Application, tanpa reload
 
 ---
 
-## 🚀 Cara Install & Jalankan
+## 📸 Tampilan
+
+> *Screenshot coming soon — upload screenshot setup screen, kasir + QR, admin panel*
+
+| Desktop | Mobile |
+|---------|--------|
+| ![Desktop](https://via.placeholder.com/400x250?text=Desktop+Screenshot) | ![Mobile](https://via.placeholder.com/200x350?text=Mobile+Screenshot) |
+
+---
+
+## 🚀 Installasi
 
 ### Persyaratan
-- **Node.js** v18 atau lebih baru
-- **npm** (bundled dengan Node.js)
+- **Node.js** v18+
+- **npm** (bundled)
 
-### Langkah-langkah
+### Langkah
 
 ```bash
-# 1. Clone repository
+# 1. Clone
 git clone https://github.com/triagustian-net/3QRIS.git
 cd 3QRIS
 
 # 2. Install dependencies
 npm install
 
-# 3. Jalankan server
+# 3. Copy & edit env
+cp .env.example .env
+# ganti JWT_SECRET dengan random string minimal 32 karakter
+
+# 4. Jalankan
 node server.js
 ```
 
-Server berjalan di **http://localhost:5000**
+Buka **http://localhost:5001** — langsung muncul halaman auth login/register/guest.
 
-### Environment Variable (Production)
+### Deploy Production
+
 ```bash
-PORT=5000           # Port server (default: 5000)
-JWT_SECRET=xxx      # Secret key JWT (wajib di production!)
+# Set environment variables (JWT_SECRET wajib!)
+export JWT_SECRET="random-string-min-32-karakter"
+export PORT=5001
+export NODE_ENV=production
+export TRUST_PROXY=true   # jika di belakang reverse proxy (Nginx/Cloudflare)
+
+node server.js
+```
+
+---
+
+## 🔒 Security
+
+3QRIS dibangun dengan prinsip **defense in depth**:
+
+| Lapisan | Detail |
+|---------|--------|
+| **CSP Header** | `script-src 'self'` tanpa `'unsafe-inline'` + `script-src-attr 'none'` — blok semua inline script & event handler |
+| **XSS Protection** | `escapeHtml()` di setiap titik `innerHTML` yang pakai data user (7 titik) |
+| **SQL Injection** | Semua query pakai parameterized (`?`) placeholder |
+| **Rate Limiting** | 200 req/15 menit global, 10 req/15 menit auth endpoint |
+| **CORS Whitelist** | Origin terbatas (domain + localhost) |
+| **Input Validation** | Server-side: username regex, password length, product name & price bounds |
+| **File Blocking** | `.db`, `.env`, `.json`, `.pem`, `.key`, `server.js` dilarang diakses via HTTP |
+| **JWT** | Token expiry 30 hari, bcrypt salt 12 rounds |
+
+---
+
+## 🧰 Tech Stack
+
+| Teknologi | Kegunaan |
+|-----------|----------|
+| **Node.js + Express** | Backend API + static file serving |
+| **SQLite3** | Database ringan, zero config |
+| **jsonwebtoken** | JWT authentication |
+| **bcryptjs** | Password hashing |
+| **jsQR** | Scan QR code dari upload gambar |
+| **QRCode.js** | Generate QR code dinamis di browser |
+| **Vanilla JS** | Frontend SPA (no framework, no build) |
+
+---
+
+## 📁 Struktur Proyek
+
+```
+3QRIS/
+├── server.js           # Backend — Express routing, auth, API, security middleware
+├── index.html          # Frontend SPA — semua UI di 1 file HTML
+├── public/
+│   └── app.js          # Frontend JS — logic auth, kasir, admin panel
+├── package.json
+├── .env.example        # Template konfigurasi environment
+├── .gitignore
+├── LICENSE             # MIT License
+└── README.md           # File ini
 ```
 
 ---
@@ -71,13 +158,13 @@ JWT_SECRET=xxx      # Secret key JWT (wajib di production!)
 | Method | Endpoint | Deskripsi |
 |--------|----------|-----------|
 | `POST` | `/api/register` | Daftar akun baru |
-| `POST` | `/api/login` | Login dapat JWT token |
-| `GET` | `/api/me` | Verifikasi token (butuh auth) |
+| `POST` | `/api/login` | Login, dapat JWT token |
+| `GET` | `/api/me` | Verifikasi token & dapat data user |
 
 ### Config (Login Required)
 | Method | Endpoint | Deskripsi |
 |--------|----------|-----------|
-| `POST` | `/api/save` | Simpan config QRIS & produk (per user) |
+| `POST` | `/api/save` | Simpan QRIS string & daftar produk |
 | `GET` | `/api/load` | Load config user yang login |
 
 ### Transactions (Login Required)
@@ -86,48 +173,19 @@ JWT_SECRET=xxx      # Secret key JWT (wajib di production!)
 | `POST` | `/api/transaction` | Simpan transaksi baru |
 | `GET` | `/api/transactions` | Riwayat transaksi user |
 
-### Admin Panel (Admin Only)
+### Admin (Admin Only)
 | Method | Endpoint | Deskripsi |
 |--------|----------|-----------|
-| `GET` | `/api/admin/stats` | Statistik dashboard (total user, tx, revenue) |
-| `GET` | `/api/admin/users` | Daftar semua user + statistik |
-| `GET` | `/api/admin/transactions` | Semua transaksi (semua user) |
-| `POST` | `/api/admin/promote/:id` | Promosikan user jadi admin |
-| `POST` | `/api/admin/demote/:id` | Turunkan admin jadi user |
+| `GET` | `/api/admin/stats` | Statistik dashboard |
+| `GET` | `/api/admin/users` | Daftar semua user |
+| `GET` | `/api/admin/transactions` | Semua transaksi |
+| `POST` | `/api/admin/promote/:id` | Promosikan user → admin |
+| `POST` | `/api/admin/demote/:id` | Turunkan admin → user |
 
-### Auth Header
-Semua endpoint protected butuh header:
-```
-Authorization: Bearer <token>
-```
-
----
-
-## 🧰 Tech Stack
-
-| Teknologi | Kegunaan |
-|-----------|----------|
-| **Node.js + Express** | Backend API & static file serving |
-| **SQLite3** | Database ringan tanpa setup |
-| **jsonwebtoken** | JWT authentication |
-| **bcryptjs** | Password hashing |
-| **jsQR** | Scan QR code dari gambar |
-| **QRCode.js** | Generate QR code dinamis |
-| **Vanilla JS** | Frontend (no framework) |
-
----
-
-## 📁 Struktur Proyek
-
-```
-3QRIS/
-├── server.js          # Backend: Express + SQLite + JWT Auth + Admin API
-├── index.html         # Frontend SPA (welcome modal, setup, kasir, admin panel)
-├── package.json       # Dependencies
-├── 3qris.db           # Database SQLite (auto-generated)
-├── README.md          # File ini
-└── node_modules/      # Dependencies (jangan di-commit)
-```
+> **Auth Header** semua endpoint protected:
+> ```
+> Authorization: Bearer <your-jwt-token>
+> ```
 
 ---
 
@@ -135,16 +193,27 @@ Authorization: Bearer <token>
 
 ```
 Buka 3QRIS
-  ├─ Ada token JWT? → Verifikasi ke /api/me → Load dari server → Kasir
-  ├─ Ada data localStorage? → Guest mode (pakai data lokal) → Kasir
+  ├─ Ada token JWT? → Verifikasi /api/me → Load dari server → Kasir
+  ├─ Ada data localStorage? → Guest mode → Kasir
   └─ Tidak ada? → Welcome Modal
-        ├─ Login → Masuk ke Kasir
-        ├─ Daftar → Setup QRIS → Kasir
-        └─ Guest → Setup QRIS → Kasir (data di localStorage)
+        ├─ Login → Kasir (data dari server)
+        ├─ Daftar → Setup QRIS & Produk → Kasir
+        └─ Guest → Setup QRIS & Produk → Kasir (data di browser)
 ```
+
+---
+
+## 🤝 Kontribusi
+
+Pull request terbuka! Pastikan:
+
+1. **Tidak menambah inline event handler** — semua event via `addEventListener`
+2. **escapeHtml** untuk setiap data user yang masuk `innerHTML`
+3. **Parameterized query** untuk setiap operasi database
+4. **Uji coba** sebelum pull request
 
 ---
 
 ## 📄 Lisensi
 
-ISC License — Dibuat dengan ❤️ oleh [triagustian-net](https://github.com/triagustian-net)
+[MIT](LICENSE) © 2025 Tri Agustian

@@ -1,23 +1,148 @@
+require("dotenv").config();
+
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
 const cors = require("cors");
 const path = require("path");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 
 const app = express();
-app.use(express.json());
-app.use(cors());
 
-// ── JWT SECRET ──
-const JWT_SECRET = process.env.JWT_SECRET || "3qris-rahasia-2025-ubah-di-env";
-const TOKEN_EXPIRY = "30d"; // token berlaku 30 hari
+// ════════════════════════════
+// 🔒 ENV VALIDATION
+// ════════════════════════════
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET || JWT_SECRET.length < 32) {
+  console.error("❌ FATAL: JWT_SECRET harus di-set di .env (min 32 karakter)");
+  process.exit(1);
+}
+const PORT = process.env.PORT || 5001;
+const TOKEN_EXPIRY = "30d";
 
-// ── INIT DATABASE ──
+// ════════════════════════════
+// 🔒 SECURITY MIDDLEWARE
+// ════════════════════════════
+
+// Trust proxy (Cloudflare)
+if (process.env.TRUST_PROXY === "true") {
+  app.set("trust proxy", 1);
+}
+
+// Helmet security headers
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        scriptSrc: [
+          "'self'",
+          "https://cdn.jsdelivr.net",
+          "https://cdnjs.cloudflare.com",
+        ],
+        scriptSrcAttr: ["'none'"],
+        imgSrc: ["'self'", "data:", "blob:"],
+        connectSrc: ["'self'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'self'"],
+        upgradeInsecureRequests: [],
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+  }),
+);
+
+// CORS whitelist
+const allowedOrigins = [
+  "https://3qris.my.id",
+  "https://www.3qris.my.id",
+  "http://localhost:5001",
+  "http://127.0.0.1:5001",
+];
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS blocked: " + origin));
+      }
+    },
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
+
+// Rate limiting
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({ error: "Terlalu banyak request, coba lagi nanti." });
+  },
+});
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({ error: "Terlalu banyak percobaan login. Coba lagi dalam 15 menit." });
+  },
+});
+app.use(globalLimiter);
+
+// Body parser
+app.use(express.json({ limit: "1mb" }));
+
+// Block sensitive files & directory listing
+const BLOCKED_EXTS = [".db", ".env", ".json", ".pem", ".key", ".sql", ".log", ".backup"];
+const BLOCKED_NAMES = ["server.js", ".env", ".git", ".gitignore", "package.json", "package-lock.json"];
+app.use((req, res, next) => {
+  const url = req.path.toLowerCase();
+  const ext = path.extname(url);
+  const base = path.basename(url);
+  if (BLOCKED_EXTS.includes(ext)) {
+    console.warn(`[SECURITY] Blocked file access: ${req.ip} -> ${req.path}`);
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  if (BLOCKED_NAMES.includes(base)) {
+    console.warn(`[SECURITY] Blocked sensitive file: ${req.ip} -> ${req.path}`);
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  next();
+});
+
+// ════════════════════════════
+// 🔥 DATABASE INIT
+// ════════════════════════════
 const db = new sqlite3.Database("./3qris.db");
 
+// Promisify helpers
+const dbGet = (sql, params = []) =>
+  new Promise((resolve, reject) => {
+    db.get(sql, params, (err, row) => (err ? reject(err) : resolve(row)));
+  });
+const dbRun = (sql, params = []) =>
+  new Promise((resolve, reject) => {
+    db.run(sql, params, function (err) {
+      err ? reject(err) : resolve(this);
+    });
+  });
+const dbAll = (sql, params = []) =>
+  new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => (err ? reject(err) : resolve(rows)));
+  });
+
 db.serialize(() => {
-  // Tabel users (dengan role)
   db.run(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,8 +152,6 @@ db.serialize(() => {
       created_at TEXT DEFAULT (datetime('now','localtime'))
     )
   `);
-
-  // Tabel config (tambah user_id)
   db.run(`
     CREATE TABLE IF NOT EXISTS config (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,8 +160,6 @@ db.serialize(() => {
       FOREIGN KEY (user_id) REFERENCES users(id)
     )
   `);
-
-  // Tabel transactions (tambah user_id)
   db.run(`
     CREATE TABLE IF NOT EXISTS transactions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,26 +171,24 @@ db.serialize(() => {
     )
   `);
 
-  // Migrasi: tambah kolom user_id jika belum ada (untuk DB lama)
+  // Migrasi kolom user_id jika belum ada
   db.each("PRAGMA table_info(config)", (err, row) => {
     if (row && row.name === "user_id") return;
     db.run("ALTER TABLE config ADD COLUMN user_id INTEGER DEFAULT 0", () => {});
   });
   db.each("PRAGMA table_info(transactions)", (err, row) => {
     if (row && row.name === "user_id") return;
-    db.run(
-      "ALTER TABLE transactions ADD COLUMN user_id INTEGER DEFAULT 0",
-      () => {},
-    );
+    db.run("ALTER TABLE transactions ADD COLUMN user_id INTEGER DEFAULT 0", () => {});
   });
-  // Migrasi: tambah kolom role jika belum ada
   db.each("PRAGMA table_info(users)", (err, row) => {
     if (row && row.name === "role") return;
     db.run("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'", () => {});
   });
 });
 
-// ── MIDDLEWARE: VERIFIKASI JWT ──
+// ════════════════════════════
+// 🔒 AUTH MIDDLEWARE
+// ════════════════════════════
 function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -88,18 +207,15 @@ function authMiddleware(req, res, next) {
   }
 }
 
-// ── MIDDLEWARE: ADMIN ONLY (auto-bootstrap jika belum ada admin) ──
 function adminMiddleware(req, res, next) {
   if (req.userRole === "admin") return next();
 
-  // Cek apakah sudah ada admin di database
   db.get(
     `SELECT COUNT(*) as count FROM users WHERE role = 'admin'`,
     (err, row) => {
       if (err) return res.status(500).json({ error: err.message });
 
       if (row.count === 0) {
-        // Belum ada admin → auto-promote user ini jadi admin pertama
         db.run(
           `UPDATE users SET role = 'admin' WHERE id = ?`,
           [req.userId],
@@ -110,9 +226,7 @@ function adminMiddleware(req, res, next) {
           },
         );
       } else {
-        return res
-          .status(403)
-          .json({ error: "Akses ditolak. Hanya admin yang bisa mengakses." });
+        return res.status(403).json({ error: "Akses ditolak. Hanya admin yang bisa mengakses." });
       }
     },
   );
@@ -122,82 +236,85 @@ function adminMiddleware(req, res, next) {
 // 🔥 AUTH ENDPOINTS
 // ════════════════════════════
 
-// REGISTER
-app.post("/api/register", (req, res) => {
-  const { username, password } = req.body;
+app.post("/api/register", authLimiter, async (req, res) => {
+  try {
+    const { username, password } = req.body;
 
-  if (!username || !password) {
-    return res.status(400).json({ error: "Username dan password wajib diisi" });
-  }
-  if (username.length < 3) {
-    return res.status(400).json({ error: "Username minimal 3 karakter" });
-  }
-  if (password.length < 4) {
-    return res.status(400).json({ error: "Password minimal 4 karakter" });
-  }
-
-  // Cek apakah ini user pertama → jadikan admin
-  db.get(`SELECT COUNT(*) as count FROM users`, (err, row) => {
-    if (err) {
-      console.error("COUNT ERROR:", err);
-      return res.status(500).json({ error: "Gagal mendaftar" });
+    if (!username || !password) {
+      return res.status(400).json({ error: "Username dan password wajib diisi" });
     }
+    if (typeof username !== "string" || typeof password !== "string") {
+      return res.status(400).json({ error: "Input tidak valid" });
+    }
+    const u = username.trim();
+    const p = password.trim();
+    if (u.length < 3 || u.length > 30) {
+      return res.status(400).json({ error: "Username 3-30 karakter" });
+    }
+    if (p.length < 6 || p.length > 128) {
+      return res.status(400).json({ error: "Password minimal 6 karakter, maks 128" });
+    }
+    // Alphanumeric + underscore only
+    if (!/^[a-zA-Z0-9_]+$/.test(u)) {
+      return res.status(400).json({ error: "Username hanya huruf, angka, dan underscore" });
+    }
+
+    const row = await dbGet(`SELECT COUNT(*) as count FROM users`);
     const isFirstUser = row.count === 0;
     const role = isFirstUser ? "admin" : "user";
 
-    // Hash password
-    const hashedPassword = bcrypt.hashSync(password, 10);
+    const hashedPassword = await bcrypt.hash(p, 12);
 
-    db.run(
+    const result = await dbRun(
       `INSERT INTO users (username, password, role) VALUES (?, ?, ?)`,
-      [username, hashedPassword, role],
-      function (err2) {
-        if (err2) {
-          if (err2.message.includes("UNIQUE")) {
-            return res.status(409).json({ error: "Username sudah digunakan" });
-          }
-          console.error("REGISTER ERROR:", err2);
-          return res.status(500).json({ error: "Gagal mendaftar" });
-        }
-
-        const userId = this.lastID;
-        const token = jwt.sign({ userId, username, role }, JWT_SECRET, {
-          expiresIn: TOKEN_EXPIRY,
-        });
-
-        res.json({
-          success: true,
-          token,
-          user: { id: userId, username, role },
-          message: isFirstUser
-            ? "🎉 Kamu admin pertama! Panel admin tersedia di dashboard."
-            : "Pendaftaran berhasil! Silakan setup QRIS dan produk kamu.",
-        });
-      },
+      [u, hashedPassword, role],
     );
-  });
+
+    const userId = result.lastID;
+    const token = jwt.sign({ userId, username: u, role }, JWT_SECRET, {
+      expiresIn: TOKEN_EXPIRY,
+    });
+
+    res.json({
+      success: true,
+      token,
+      user: { id: userId, username: u, role },
+      message: isFirstUser
+        ? "🎉 Kamu admin pertama! Panel admin tersedia di dashboard."
+        : "Pendaftaran berhasil! Silakan setup QRIS dan produk kamu.",
+    });
+  } catch (err) {
+    if (err.message && err.message.includes("UNIQUE")) {
+      return res.status(409).json({ error: "Username sudah digunakan" });
+    }
+    console.error("[SECURITY] REGISTER ERROR:", err.message);
+    res.status(500).json({ error: "Gagal mendaftar" });
+  }
 });
 
-// LOGIN
-app.post("/api/login", (req, res) => {
-  const { username, password } = req.body;
+app.post("/api/login", authLimiter, async (req, res) => {
+  try {
+    const { username, password } = req.body;
 
-  if (!username || !password) {
-    return res.status(400).json({ error: "Username dan password wajib diisi" });
-  }
-
-  db.get(`SELECT * FROM users WHERE username = ?`, [username], (err, user) => {
-    if (err) {
-      console.error("LOGIN ERROR:", err);
-      return res.status(500).json({ error: "Gagal login" });
+    if (!username || !password) {
+      return res.status(400).json({ error: "Username dan password wajib diisi" });
     }
+    if (typeof username !== "string" || typeof password !== "string") {
+      return res.status(400).json({ error: "Input tidak valid" });
+    }
+
+    const u = username.trim();
+    const user = await dbGet(`SELECT * FROM users WHERE username = ?`, [u]);
+
     if (!user) {
-      return res.status(401).json({ error: "Username tidak ditemukan" });
+      console.warn(`[SECURITY] Failed login attempt: ${req.ip} -> user '${u}' not found`);
+      return res.status(401).json({ error: "Username atau password salah" });
     }
 
-    const valid = bcrypt.compareSync(password, user.password);
+    const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
-      return res.status(401).json({ error: "Password salah" });
+      console.warn(`[SECURITY] Failed login attempt: ${req.ip} -> user '${u}' wrong password`);
+      return res.status(401).json({ error: "Username atau password salah" });
     }
 
     const token = jwt.sign(
@@ -212,246 +329,222 @@ app.post("/api/login", (req, res) => {
       user: { id: user.id, username: user.username, role: user.role },
       message: "Login berhasil!",
     });
-  });
+  } catch (err) {
+    console.error("[SECURITY] LOGIN ERROR:", err.message);
+    res.status(500).json({ error: "Gagal login" });
+  }
 });
 
-// VERIFIKASI TOKEN (untuk cek apakah user masih login)
-app.get("/api/me", authMiddleware, (req, res) => {
-  // Ambil role terbaru dari database (bisa berubah karena auto-bootstrap)
-  db.get(
-    `SELECT id, username, role FROM users WHERE id = ?`,
-    [req.userId],
-    (err, user) => {
-      if (err || !user) {
-        return res.status(401).json({ error: "User tidak ditemukan" });
-      }
-      res.json({
-        success: true,
-        user: { id: user.id, username: user.username, role: user.role },
-      });
-    },
-  );
+app.get("/api/me", authMiddleware, async (req, res) => {
+  try {
+    const user = await dbGet(`SELECT id, username, role FROM users WHERE id = ?`, [req.userId]);
+    if (!user) {
+      return res.status(401).json({ error: "User tidak ditemukan" });
+    }
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ════════════════════════════
 // 🔥 CONFIG (butuh login)
 // ════════════════════════════
 
-// SAVE CONFIG
-app.post("/api/save", authMiddleware, (req, res) => {
-  const data = JSON.stringify(req.body);
-  const userId = req.userId;
-
-  // Hapus config lama user ini, insert baru
-  db.run(`DELETE FROM config WHERE user_id = ?`, [userId], (err) => {
-    if (err) {
-      console.error("SAVE CONFIG DELETE ERROR:", err);
-      return res.status(500).json({ success: false });
-    }
-    db.run(
-      `INSERT INTO config (user_id, data) VALUES (?, ?)`,
-      [userId, data],
-      (err2) => {
-        if (err2) {
-          console.error("SAVE CONFIG INSERT ERROR:", err2);
-          return res.status(500).json({ success: false });
+app.post("/api/save", authMiddleware, async (req, res) => {
+  try {
+    const body = req.body;
+    // Validasi produk names dari XSS
+    if (body && body.products && Array.isArray(body.products)) {
+      for (const p of body.products) {
+        if (typeof p.name !== "string" || p.name.length > 100) {
+          return res.status(400).json({ error: "Nama produk tidak valid (max 100 karakter)" });
         }
-        res.json({ success: true });
-      },
-    );
-  });
+        if (typeof p.price !== "number" || p.price < 0 || p.price > 100000000) {
+          return res.status(400).json({ error: "Harga produk tidak valid" });
+        }
+      }
+    }
+    const data = JSON.stringify(body);
+    const userId = req.userId;
+    await dbRun(`DELETE FROM config WHERE user_id = ?`, [userId]);
+    await dbRun(`INSERT INTO config (user_id, data) VALUES (?, ?)`, [userId, data]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("[SECURITY] SAVE CONFIG ERROR:", err.message);
+    res.status(500).json({ success: false });
+  }
 });
 
-// LOAD CONFIG
-app.get("/api/load", authMiddleware, (req, res) => {
-  const userId = req.userId;
-
-  db.get(
-    `SELECT data FROM config WHERE user_id = ? ORDER BY id DESC LIMIT 1`,
-    [userId],
-    (err, row) => {
-      if (err) {
-        console.error("LOAD CONFIG ERROR:", err);
-        return res.status(500).json(null);
-      }
-      if (row) {
-        res.json(JSON.parse(row.data));
-      } else {
-        res.json(null);
-      }
-    },
-  );
+app.get("/api/load", authMiddleware, async (req, res) => {
+  try {
+    const row = await dbGet(
+      `SELECT data FROM config WHERE user_id = ? ORDER BY id DESC LIMIT 1`,
+      [req.userId],
+    );
+    res.json(row ? JSON.parse(row.data) : null);
+  } catch (err) {
+    console.error("[SECURITY] LOAD CONFIG ERROR:", err.message);
+    res.status(500).json(null);
+  }
 });
 
 // ════════════════════════════
 // 🔥 TRANSAKSI (butuh login)
 // ════════════════════════════
 
-// SAVE TRANSACTION
-app.post("/api/transaction", authMiddleware, (req, res) => {
-  const { name, price, time } = req.body;
-  const userId = req.userId;
-
-  db.run(
-    `INSERT INTO transactions (user_id, product, price, date) VALUES (?, ?, ?, ?)`,
-    [userId, name, price, time],
-    (err) => {
-      if (err) {
-        console.error("SAVE TRANSACTION ERROR:", err);
-        return res.status(500).json({ success: false });
-      }
-      res.json({ success: true });
-    },
-  );
+app.post("/api/transaction", authMiddleware, async (req, res) => {
+  try {
+    const { name, price, time } = req.body;
+    const userId = req.userId;
+    if (typeof name !== "string" || typeof price !== "number" || typeof time !== "string") {
+      return res.status(400).json({ error: "Format transaksi tidak valid" });
+    }
+    if (name.length > 100) {
+      return res.status(400).json({ error: "Nama produk terlalu panjang" });
+    }
+    if (price < 0 || price > 100000000) {
+      return res.status(400).json({ error: "Harga tidak valid" });
+    }
+    await dbRun(
+      `INSERT INTO transactions (user_id, product, price, date) VALUES (?, ?, ?, ?)`,
+      [userId, name, price, time],
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error("[SECURITY] SAVE TRANSACTION ERROR:", err.message);
+    res.status(500).json({ success: false });
+  }
 });
 
-// LOAD TRANSACTIONS
-app.get("/api/transactions", authMiddleware, (req, res) => {
-  const userId = req.userId;
-
-  db.all(
-    `SELECT * FROM transactions WHERE user_id = ? ORDER BY id DESC`,
-    [userId],
-    (err, rows) => {
-      if (err) {
-        console.error("LOAD TRANSACTION ERROR:", err);
-        return res.status(500).json([]);
-      }
-      res.json(rows || []);
-    },
-  );
+app.get("/api/transactions", authMiddleware, async (req, res) => {
+  try {
+    const rows = await dbAll(
+      `SELECT * FROM transactions WHERE user_id = ? ORDER BY id DESC`,
+      [req.userId],
+    );
+    res.json(rows || []);
+  } catch (err) {
+    console.error("[SECURITY] LOAD TRANSACTION ERROR:", err.message);
+    res.status(500).json([]);
+  }
 });
 
 // ════════════════════════════
 // 🔥 ADMIN PANEL (admin only)
 // ════════════════════════════
 
-// STATISTIK DASHBOARD
-app.get("/api/admin/stats", authMiddleware, adminMiddleware, (req, res) => {
-  db.get(`SELECT COUNT(*) as totalUsers FROM users`, (err, userRow) => {
-    if (err) return res.status(500).json({ error: err.message });
-
-    db.get(
+app.get("/api/admin/stats", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const userRow = await dbGet(`SELECT COUNT(*) as totalUsers FROM users`);
+    const txRow = await dbGet(
       `SELECT COUNT(*) as totalTx, COALESCE(SUM(price), 0) as totalRevenue FROM transactions`,
-      (err2, txRow) => {
-        if (err2) return res.status(500).json({ error: err2.message });
-
-        // Transaksi hari ini
-        const today = new Date().toISOString().slice(0, 10);
-        db.get(
-          `SELECT COUNT(*) as todayTx, COALESCE(SUM(price), 0) as todayRevenue FROM transactions WHERE date LIKE ?`,
-          [`%${today}%`],
-          (err3, todayRow) => {
-            if (err3) return res.status(500).json({ error: err3.message });
-
-            res.json({
-              totalUsers: userRow.totalUsers,
-              totalTransactions: txRow.totalTx,
-              totalRevenue: txRow.totalRevenue,
-              todayTransactions: todayRow.todayTx,
-              todayRevenue: todayRow.todayRevenue,
-            });
-          },
-        );
-      },
     );
-  });
+    const today = new Date().toISOString().slice(0, 10);
+    const todayRow = await dbGet(
+      `SELECT COUNT(*) as todayTx, COALESCE(SUM(price), 0) as todayRevenue FROM transactions WHERE date LIKE ?`,
+      [`%${today}%`],
+    );
+    res.json({
+      totalUsers: userRow.totalUsers,
+      totalTransactions: txRow.totalTx,
+      totalRevenue: txRow.totalRevenue,
+      todayTransactions: todayRow.todayTx,
+      todayRevenue: todayRow.todayRevenue,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// DAFTAR SEMUA USER
-app.get("/api/admin/users", authMiddleware, adminMiddleware, (req, res) => {
-  db.all(
-    `SELECT u.id, u.username, u.role, u.created_at,
-            COUNT(t.id) as tx_count,
-            COALESCE(SUM(t.price), 0) as total_revenue
-     FROM users u
-     LEFT JOIN transactions t ON t.user_id = u.id
-     GROUP BY u.id
-     ORDER BY u.created_at DESC`,
-    (err, rows) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json(rows || []);
-    },
-  );
+app.get("/api/admin/users", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const rows = await dbAll(
+      `SELECT u.id, u.username, u.role, u.created_at,
+              COUNT(t.id) as tx_count,
+              COALESCE(SUM(t.price), 0) as total_revenue
+       FROM users u
+       LEFT JOIN transactions t ON t.user_id = u.id
+       GROUP BY u.id
+       ORDER BY u.created_at DESC`,
+    );
+    res.json(rows || []);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// DAFTAR SEMUA TRANSAKSI (semua user)
-app.get(
-  "/api/admin/transactions",
-  authMiddleware,
-  adminMiddleware,
-  (req, res) => {
-    db.all(
+app.get("/api/admin/transactions", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const rows = await dbAll(
       `SELECT t.*, u.username FROM transactions t
-     LEFT JOIN users u ON t.user_id = u.id
-     ORDER BY t.id DESC
-     LIMIT 200`,
-      (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(rows || []);
-      },
+       LEFT JOIN users u ON t.user_id = u.id
+       ORDER BY t.id DESC
+       LIMIT 200`,
     );
-  },
-);
+    res.json(rows || []);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
-// PROMOSIKAN USER JADI ADMIN (admin only)
-app.post(
-  "/api/admin/promote/:userId",
-  authMiddleware,
-  adminMiddleware,
-  (req, res) => {
-    const { userId } = req.params;
-    db.run(`UPDATE users SET role = 'admin' WHERE id = ?`, [userId], (err) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ success: true, message: "User dipromosikan menjadi admin" });
-    });
-  },
-);
+app.post("/api/admin/promote/:userId", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.userId, 10);
+    if (isNaN(userId)) return res.status(400).json({ error: "User ID tidak valid" });
+    await dbRun(`UPDATE users SET role = 'admin' WHERE id = ?`, [userId]);
+    console.warn(`[SECURITY] Admin ${req.username} promoted user ${userId} to admin`);
+    res.json({ success: true, message: "User dipromosikan menjadi admin" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
-// DEMOTE ADMIN JADI USER (admin only, tidak bisa demote diri sendiri)
-app.post(
-  "/api/admin/demote/:userId",
-  authMiddleware,
-  adminMiddleware,
-  (req, res) => {
-    const { userId } = req.params;
-    if (parseInt(userId) === req.userId) {
-      return res
-        .status(400)
-        .json({ error: "Tidak bisa menurunkan diri sendiri" });
+app.post("/api/admin/demote/:userId", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.userId, 10);
+    if (isNaN(userId)) return res.status(400).json({ error: "User ID tidak valid" });
+    if (userId === req.userId) {
+      return res.status(400).json({ error: "Tidak bisa menurunkan diri sendiri" });
     }
-    db.run(`UPDATE users SET role = 'user' WHERE id = ?`, [userId], (err) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ success: true, message: "Admin diturunkan menjadi user" });
-    });
-  },
-);
+    await dbRun(`UPDATE users SET role = 'user' WHERE id = ?`, [userId]);
+    console.warn(`[SECURITY] Admin ${req.username} demoted user ${userId} to user`);
+    res.json({ success: true, message: "Admin diturunkan menjadi user" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // ════════════════════════════
-// 🔥 PUBLIC / TEST
+// 🔥 PUBLIC HEALTH CHECK
 // ════════════════════════════
 app.get("/api", (req, res) => {
-  res.json({ status: "ok", message: "API 3QRIS SQLite jalan 🚀" });
+  res.json({ status: "ok", message: "API 3QRIS Secure 🔒" });
 });
 
 // ════════════════════════════
-// 🔥 SERVE STATIC FILES
+// 🔥 SERVE STATIC (SPA)
 // ════════════════════════════
-app.use(express.static(__dirname));
+// Hanya serve index.html, semua file lain di blokir di atas
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
 
+// Serve file statis dari public/ (JS, CSS, dll)
+app.use("/public", express.static(path.join(__dirname, "public")));
+
+// SPA fallback untuk client-side routing
 app.use((req, res, next) => {
-  if (req.path.includes(".")) return next();
+  if (req.path.startsWith("/api")) return next();
+  if (req.path.startsWith("/public")) return next();
+  if (req.path.includes(".")) return res.status(404).json({ error: "Not found" });
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
 // ════════════════════════════
 // 🔥 RUN SERVER
 // ════════════════════════════
-const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`✅ Server 3QRIS jalan di http://localhost:${PORT}`);
-  console.log(`   Endpoint: /api/register | /api/login | /api/me`);
-  console.log(
-    `   Protected: /api/save | /api/load | /api/transaction | /api/transactions`,
-  );
+  console.log(`✅ Server 3QRIS SECURE jalan di http://localhost:${PORT}`);
+  console.log(`   JWT: ${JWT_SECRET.substring(0, 8)}... (masked)`);
 });
