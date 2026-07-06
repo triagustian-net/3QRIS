@@ -51,6 +51,13 @@
     .btn-icon:hover { border-color: #ef4444; color: #ef4444; }
     .btn-add { font-size: 12px; color: var(--accent); background: none; border: 1px dashed rgba(59,130,246,0.4); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; transition: all 0.2s; }
     .btn-add:hover { background: rgba(59,130,246,0.08); }
+
+    /* ══ KODE UNIK ══ */
+    .unik-options { display: flex; gap: 8px; margin-top: 8px; }
+    .unik-btn { flex: 1; padding: 10px; background: var(--card2); border: 2px solid var(--border); border-radius: 10px; color: var(--muted); font-size: 13px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.2s; font-family: 'Plus Jakarta Sans', sans-serif; line-height: 1.4; user-select: none; }
+    .unik-btn:hover { border-color: var(--accent); color: var(--text); }
+    .unik-btn.active { border-color: var(--accent); background: rgba(59,130,246,0.12); color: var(--accent-g); }
+
     .btn-start { width: 100%; margin-top: 28px; padding: 15px; background: linear-gradient(135deg, var(--accent), #6366f1); color: #fff; border: none; border-radius: 12px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; transition: opacity 0.2s, transform 0.1s; }
     .btn-start:hover { opacity: 0.92; transform: translateY(-1px); }
     .err-msg { display: none; font-size: 12px; color: #fca5a5; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); border-radius: 8px; padding: 10px 12px; margin-top: 12px; }
@@ -385,6 +392,15 @@
       <button class="btn-add">+ Tambah</button>
     </div>
     <div id="productList"></div>
+    <!-- ══ BARU: KODE UNIK ══ -->
+    <div style="margin-top:16px;">
+      <div class="field-label">Kode Unik (hindari bentrok nominal)</div>
+      <div class="unik-options" id="unikOptions">
+        <label class="unik-btn" data-digits="1">1 digit<br><small style="font-weight:400;opacity:0.6">1-9</small></label>
+        <label class="unik-btn" data-digits="2">2 digit<br><small style="font-weight:400;opacity:0.6">1-99</small></label>
+        <label class="unik-btn active" data-digits="3">3 digit<br><small style="font-weight:400;opacity:0.6">1-999</small></label>
+      </div>
+    </div>
     <div class="err-msg" id="errMsg"></div>
     <button class="btn-start">Buka Kasir →</button>
   </div>
@@ -430,6 +446,7 @@
         <div class="qr-product-badge" id="qrProductBadge"></div>
         <div id="qr-box"></div>
         <div class="qr-amount" id="qrAmount"></div>
+        <div class="qr-note" id="qrUnikNote" style="font-size:13px;color:var(--yellow);background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.2);border-radius:8px;padding:10px 14px;margin-bottom:14px;text-align:center;line-height:1.5;display:none;"></div>
         <div class="qr-note">Scan dengan aplikasi pembayaran · berlaku 1 transaksi</div>
 
         <!-- ══ BARU: FEE LAYANAN ══ -->

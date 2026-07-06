@@ -12,6 +12,7 @@
   let currentUser = null;
   let isGuest = false;
   let isAdmin = false;
+  let currentKodeUnik = 0;
 
   const DEFAULT_PRODUCTS = [
     { name: "Voucher 1 Hari", price: 6500 },
@@ -341,6 +342,8 @@
     if (localConfig && localConfig.products) {
       renderProductRows(localConfig.products);
       els.qrisManual.value = localConfig.qrisString || "";
+      config = localConfig;
+      renderKodeUnikOptions();
     } else {
       renderProductRows(DEFAULT_PRODUCTS);
     }
@@ -351,6 +354,7 @@
       const data = await apiFetch(API_URL + "/load");
       if (data && data.qrisString) {
         config = data;
+        config.kodeUnikLength = config.kodeUnikLength || 3;
         renderKasir();
       } else {
         els.setupScreen.style.display = "flex";
@@ -365,6 +369,7 @@
             price: tx.price,
             time: tx.date,
             fee: 0,
+            kode_unik: tx.kode_unik || 0,
           }));
           renderTxLog();
         }
@@ -527,7 +532,7 @@
       showErr("Tambahkan minimal 1 produk");
       return;
     }
-    config = { qrisString: qris, products: products };
+    config = { qrisString: qris, products: products, kodeUnikLength: getSelectedKodeUnikLength() };
     if (isGuest) {
       saveToLocal("config", config);
       renderKasir();
@@ -705,11 +710,20 @@
   function updateFeeSummary() {
     if (!currentProduct) return;
     const base = currentProduct.price;
-    const total = base + currentFee;
+    const total = base + currentFee + currentKodeUnik;
     els.feeBase.textContent = "Rp " + base.toLocaleString("id-ID");
     els.feeAmount.textContent = "Rp " + currentFee.toLocaleString("id-ID");
     els.feeTotal.textContent = "Rp " + total.toLocaleString("id-ID");
     els.feeSummary.style.display = "block";
+
+    // Update unik note if visible
+    const unikNote = document.getElementById("qrUnikNote");
+    if (unikNote && currentKodeUnik > 0) {
+      unikNote.innerHTML =
+        "Harga <strong>Rp " + base.toLocaleString("id-ID") +
+        "</strong> + Kode Unik <strong>" + currentKodeUnik +
+        "</strong> = <strong>Rp " + total.toLocaleString("id-ID") + "</strong>";
+    }
   }
 
   // ═══ QRIS ENGINE ═══
@@ -740,7 +754,9 @@
   }
 
   function generateDynamicQR(product) {
-    const totalAmount = product.price + currentFee;
+    const digits = config.kodeUnikLength || 3;
+    currentKodeUnik = generateKodeUnik(digits);
+    const totalAmount = product.price + currentFee + currentKodeUnik;
     currentTotal = totalAmount;
     const result = convertMinimal(config.qrisString, totalAmount);
     if (crc16(result.slice(0, -4)) !== result.slice(-4)) {
@@ -768,11 +784,25 @@
     els.qrProductBadge.textContent = displayName;
     els.qrAmount.textContent =
       "Rp " + totalAmount.toLocaleString("id-ID");
+    // Show kode unik breakdown
+    const unikNote = document.getElementById("qrUnikNote");
+    if (unikNote) {
+      if (currentKodeUnik > 0) {
+        const base = product.price + currentFee;
+        unikNote.innerHTML =
+          "Harga <strong>Rp " + base.toLocaleString("id-ID") +
+          "</strong> + Kode Unik <strong>" + currentKodeUnik +
+          "</strong> = <strong>Rp " + totalAmount.toLocaleString("id-ID") + "</strong>";
+        unikNote.style.display = "block";
+      } else {
+        unikNote.style.display = "none";
+      }
+    }
     els.qrLoading.style.display = "none";
     els.qrResult.style.display = "flex";
     if (currentFee > 0) updateFeeSummary();
     const payload = btoa(
-      JSON.stringify({ qris: qrisString, name: displayName, price: totalAmount })
+      JSON.stringify({ qris: qrisString, name: displayName, price: totalAmount, kode_unik: currentKodeUnik })
     );
     const link =
       window.location.origin +
@@ -823,11 +853,15 @@
     document
       .querySelectorAll(".product-card")
       .forEach((c) => c.classList.remove("selected"));
-    currentProduct = null;
+      currentProduct = null;
     currentFee = 0;
+    currentKodeUnik = 0;
     els.feeEnabled.checked = false;
     els.feeOptions.classList.remove("show");
     els.feeSummary.style.display = "none";
+    // Hide kode unik note on reset
+    const unikNote = document.getElementById("qrUnikNote");
+    if (unikNote) unikNote.style.display = "none";
   }
 
   // ═══ TRANSACTIONS ═══
@@ -841,6 +875,7 @@
       price: totalAmount,
       time: time,
       fee: currentFee,
+      kode_unik: currentKodeUnik,
     };
     transactions.unshift(tx);
     if (transactions.length > 20) transactions.pop();
@@ -870,6 +905,11 @@
           (tx.fee > 0
             ? ' <span style="color:var(--yellow);font-size:11px;">+Fee</span>'
             : "") +
+          (tx.kode_unik
+            ? ' <span style="color:var(--accent-g);font-size:11px;">#' +
+              tx.kode_unik +
+              "</span>"
+            : "") +
           '</div><div class="tx-time">' +
           tx.time +
           '</div></div><div class="tx-price">Rp ' +
@@ -877,6 +917,25 @@
           "</div></div>"
       )
       .join("");
+  }
+
+  // ═══ KODE UNIK ═══
+  function getSelectedKodeUnikLength() {
+    const active = document.querySelector(".unik-btn.active");
+    return active ? parseInt(active.dataset.digits) : 3;
+  }
+
+  function generateKodeUnik(digits) {
+    if (!digits || digits < 1) return 0;
+    const max = Math.pow(10, digits) - 1;
+    return Math.floor(Math.random() * max) + 1;
+  }
+
+  function renderKodeUnikOptions() {
+    const length = config.kodeUnikLength || 3;
+    document.querySelectorAll(".unik-btn").forEach((btn) => {
+      btn.classList.toggle("active", parseInt(btn.dataset.digits) === length);
+    });
   }
 
   // ═══ SETTINGS ═══
@@ -893,6 +952,7 @@
     els.qrisManual.value = config.qrisString;
     els.productList.innerHTML = "";
     config.products.forEach((p) => addProductRow(p.name, p.price));
+    renderKodeUnikOptions();
     if (isGuest) {
       removeFromLocal("config");
     }
@@ -1150,6 +1210,14 @@
 
     // Start kasir button
     document.querySelector(".btn-start")?.addEventListener("click", startKasir);
+
+    // Kode unik options
+    document.querySelectorAll(".unik-btn").forEach((btn) => {
+      btn.addEventListener("click", function () {
+        document.querySelectorAll(".unik-btn").forEach((b) => b.classList.remove("active"));
+        this.classList.add("active");
+      });
+    });
 
     // Product list remove buttons (event delegation)
     els.productList.addEventListener("click", (e) => {

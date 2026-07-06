@@ -172,6 +172,11 @@ db.serialize(() => {
     )
   `);
 
+  // Migrasi: tambah kode_unik jika belum ada (safe)
+  db.run(`ALTER TABLE transactions ADD COLUMN kode_unik INTEGER DEFAULT 0`, (err) => {
+    // err means column already exists — safe to ignore
+  });
+
   // Migrasi kolom user_id jika belum ada
   db.each("PRAGMA table_info(config)", (err, row) => {
     if (row && row.name === "user_id") return;
@@ -396,7 +401,7 @@ app.get("/api/load", authMiddleware, async (req, res) => {
 
 app.post("/api/transaction", authMiddleware, async (req, res) => {
   try {
-    const { name, price, time } = req.body;
+    const { name, price, time, kode_unik } = req.body;
     const userId = req.userId;
     if (typeof name !== "string" || typeof price !== "number" || typeof time !== "string") {
       return res.status(400).json({ error: "Format transaksi tidak valid" });
@@ -407,9 +412,10 @@ app.post("/api/transaction", authMiddleware, async (req, res) => {
     if (price < 0 || price > 100000000) {
       return res.status(400).json({ error: "Harga tidak valid" });
     }
+    const unik = (typeof kode_unik === "number" && kode_unik > 0) ? kode_unik : 0;
     await dbRun(
-      `INSERT INTO transactions (user_id, product, price, date) VALUES (?, ?, ?, ?)`,
-      [userId, name, price, time],
+      `INSERT INTO transactions (user_id, product, price, date, kode_unik) VALUES (?, ?, ?, ?, ?)`,
+      [userId, name, price, time, unik],
     );
     res.json({ success: true });
   } catch (err) {
