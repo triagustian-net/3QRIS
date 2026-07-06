@@ -556,6 +556,13 @@
     <div style="font-size:13px;color:var(--muted);background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px;">
       Kamu akan dibawa ke halaman setup.
     </div>
+
+    <div style="margin-top:16px;">
+      <label style="font-size:13px;font-weight:600;">Webhook URL (opsional)</label>
+      <input type="url" id="webhookUrlInput" placeholder="https://tokomu.com/api/webhook" style="width:100%;margin-top:6px;padding:10px 12px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;box-sizing:border-box;" />
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;">3QRIS akan kirim POST ke URL ini tiap kali transaksi dikonfirmasi "Paid"</div>
+    </div>
+
     <div class="modal-actions">
       <button class="btn-cancel" id="btnCloseSettings">Batal</button>
       <button class="btn-confirm" id="btnGoSetup">Ke Halaman Setup</button>

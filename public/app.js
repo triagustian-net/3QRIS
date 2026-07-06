@@ -89,6 +89,7 @@
       adminTxBody: $("adminTxBody"),
       adminTabUsers: $("adminTabUsers"),
       adminTabTransactions: $("adminTabTransactions"),
+      webhookUrlInput: $("webhookUrlInput"),
     };
   }
 
@@ -370,6 +371,8 @@
             time: tx.date,
             fee: 0,
             kode_unik: tx.kode_unik || 0,
+            status: tx.status || "pending",
+            id: tx.id,
           }));
           renderTxLog();
         }
@@ -876,6 +879,8 @@
       time: time,
       fee: currentFee,
       kode_unik: currentKodeUnik,
+      status: "pending",
+      id: Date.now() + Math.floor(Math.random() * 999),
     };
     transactions.unshift(tx);
     if (transactions.length > 20) transactions.pop();
@@ -912,11 +917,50 @@
             : "") +
           '</div><div class="tx-time">' +
           tx.time +
-          '</div></div><div class="tx-price">Rp ' +
+          "</div></div>" +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+          '<div class="tx-price">Rp ' +
           tx.price.toLocaleString("id-ID") +
+          "</div>" +
+          (tx.status === "paid"
+            ? '<span style="font-size:11px;color:var(--green);background:rgba(34,197,94,0.12);padding:2px 8px;border-radius:6px;">✅ Paid</span>'
+            : '<span style="font-size:11px;color:var(--yellow);background:rgba(234,179,8,0.12);padding:2px 8px;border-radius:6px;">⏳ Pending</span>' +
+              '<button class="btn-confirm-tx" data-tx-id="' + tx.id + '" style="font-size:11px;padding:4px 10px;background:var(--green);color:#fff;border:none;border-radius:6px;cursor:pointer;">✅</button>') +
           "</div></div>"
       )
       .join("");
+
+    // Event delegation untuk tombol konfirmasi
+    els.txList.querySelectorAll(".btn-confirm-tx").forEach((btn) => {
+      btn.addEventListener("click", async (e) => {
+        const txId = parseInt(e.target.dataset.txId, 10);
+        if (!txId) return;
+        if (!confirm("Konfirmasi transaksi ini sebagai Lunas?")) return;
+        if (isGuest) {
+          const tx = transactions.find((t) => t.id === txId);
+          if (tx) { tx.status = "paid"; }
+          saveToLocal("transactions", transactions);
+          renderTxLog();
+          return;
+        }
+        try {
+          const res = await apiFetch(
+            API_URL + "/transaction/confirm/" + txId,
+            { method: "POST" }
+          );
+          const data = await res.json();
+          if (data.success) {
+            const tx = transactions.find((t) => t.id === txId);
+            if (tx) tx.status = "paid";
+            renderTxLog();
+          } else {
+            alert("Gagal: " + (data.error || "unknown"));
+          }
+        } catch (err) {
+          alert("Gagal konfirmasi: " + err.message);
+        }
+      });
+    });
   }
 
   // ═══ KODE UNIK ═══
@@ -941,9 +985,27 @@
   // ═══ SETTINGS ═══
   function openSettings() {
     els.settingsModal.classList.add("open");
+    // Load current webhook URL
+    if (els.webhookUrlInput) {
+      els.webhookUrlInput.value = config.webhook_url || "";
+    }
   }
   function closeSettings() {
     els.settingsModal.classList.remove("open");
+  }
+  async function saveWebhookUrl() {
+    const url = els.webhookUrlInput ? els.webhookUrlInput.value.trim() : "";
+    config.webhook_url = url;
+    localStorage.setItem("3qris_guest_config", JSON.stringify(config));
+    if (authToken) {
+      try {
+        await apiFetch(API_URL + "/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(config),
+        });
+      } catch (e) { /* ignore */ }
+    }
   }
   function goSetup() {
     closeSettings();
@@ -1287,6 +1349,15 @@
     document.querySelector("#nominalModal .btn-confirm")?.addEventListener("click", confirmCustomNominal);
     els.customNominalInput?.addEventListener("keydown", (e) => {
       if (e.key === "Enter") confirmCustomNominal();
+    });
+    // Settings Modal
+    document.querySelector("#settingsModal .btn-confirm")?.addEventListener("click", async () => {
+      await saveWebhookUrl();
+      goSetup();
+    });
+    document.querySelector("#btnCloseSettings")?.addEventListener("click", async () => {
+      await saveWebhookUrl();
+      els.settingsModal.style.display = "none";
     });
     document.querySelectorAll("#nominalModal .quick-btn").forEach((btn) => {
       btn.addEventListener("click", function () {

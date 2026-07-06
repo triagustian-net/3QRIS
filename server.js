@@ -177,6 +177,11 @@ db.serialize(() => {
     // err means column already exists — safe to ignore
   });
 
+  // Migrasi: tambah status jika belum ada
+  db.run(`ALTER TABLE transactions ADD COLUMN status TEXT DEFAULT 'pending'`, (err) => {
+    // err means column already exists — safe to ignore
+  });
+
   // Migrasi kolom user_id jika belum ada
   db.each("PRAGMA table_info(config)", (err, row) => {
     if (row && row.name === "user_id") return;
@@ -414,8 +419,8 @@ app.post("/api/transaction", authMiddleware, async (req, res) => {
     }
     const unik = (typeof kode_unik === "number" && kode_unik > 0) ? kode_unik : 0;
     await dbRun(
-      `INSERT INTO transactions (user_id, product, price, date, kode_unik) VALUES (?, ?, ?, ?, ?)`,
-      [userId, name, price, time, unik],
+      `INSERT INTO transactions (user_id, product, price, date, kode_unik, status) VALUES (?, ?, ?, ?, ?, ?)`,
+      [userId, name, price, time, unik, "pending"],
     );
     res.json({ success: true });
   } catch (err) {
@@ -434,6 +439,93 @@ app.get("/api/transactions", authMiddleware, async (req, res) => {
   } catch (err) {
     console.error("[SECURITY] LOAD TRANSACTION ERROR:", err.message);
     res.status(500).json([]);
+  }
+});
+
+// ════════════════════════════
+// 🔥 WEBHOOK / CALLBACK
+// ════════════════════════════
+
+/**
+ * Kirim webhook ke endpoint yang didaftarkan user
+ * Retry 3x kalau gagal (3 detik interval)
+ */
+async function sendWebhook(url, payload) {
+  if (!url || !url.startsWith("http")) return;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 10000);
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "User-Agent": "3QRIS-Webhook/1.0" },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      if (res.ok) {
+        console.log(`[WEBHOOK] ${url} → ${res.status} OK`);
+        return;
+      }
+      console.warn(`[WEBHOOK] ${url} → ${res.status}, attempt ${attempt}/3`);
+    } catch (err) {
+      console.warn(`[WEBHOOK] ${url} → ${err.message}, attempt ${attempt}/3`);
+    }
+    if (attempt < 3) await new Promise((r) => setTimeout(r, 3000));
+  }
+  console.error(`[WEBHOOK] ${url} — gagal setelah 3 percobaan`);
+}
+
+/**
+ * POST /api/transaction/confirm/:id
+ * Konfirmasi transaksi sebagai "paid" → kirim webhook
+ */
+app.post("/api/transaction/confirm/:id", authMiddleware, async (req, res) => {
+  try {
+    const txId = parseInt(req.params.id, 10);
+    if (isNaN(txId)) return res.status(400).json({ error: "ID transaksi tidak valid" });
+
+    const tx = await dbGet(
+      `SELECT * FROM transactions WHERE id = ? AND user_id = ?`,
+      [txId, req.userId],
+    );
+    if (!tx) return res.status(404).json({ error: "Transaksi tidak ditemukan" });
+    if (tx.status === "paid") return res.status(400).json({ error: "Transaksi sudah dikonfirmasi" });
+
+    await dbRun(`UPDATE transactions SET status = 'paid' WHERE id = ?`, [txId]);
+
+    // Kirim webhook
+    const configRow = await dbGet(
+      `SELECT data FROM config WHERE user_id = ? ORDER BY id DESC LIMIT 1`,
+      [req.userId],
+    );
+    let webhookUrl = "";
+    if (configRow) {
+      try {
+        const configData = JSON.parse(configRow.data);
+        webhookUrl = configData.webhook_url || "";
+      } catch (e) { /* ignore */ }
+    }
+
+    const payload = {
+      event: "payment.paid",
+      transaction_id: tx.id,
+      product: tx.product,
+      price: tx.price,
+      kode_unik: tx.kode_unik || 0,
+      amount: tx.price,
+      timestamp: new Date().toISOString(),
+    };
+
+    if (webhookUrl) {
+      // Fire and forget (dijalanin di background)
+      sendWebhook(webhookUrl, payload);
+    }
+
+    res.json({ success: true, message: "Transaksi dikonfirmasi", webhook_url: webhookUrl || null });
+  } catch (err) {
+    console.error("[CONFIRM] Error:", err.message);
+    res.status(500).json({ error: "Gagal konfirmasi transaksi" });
   }
 });
 
