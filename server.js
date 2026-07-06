@@ -530,6 +530,136 @@ app.get("/api", (req, res) => {
 });
 
 // ════════════════════════════
+// 🔥 QRIS ENGINE (server-side)
+// ════════════════════════════
+
+function crc16(str) {
+  let crc = 0xffff;
+  for (let i = 0; i < str.length; i++) {
+    crc ^= str.charCodeAt(i) << 8;
+    for (let j = 0; j < 8; j++) {
+      crc = crc & 0x8000 ? (crc << 1) ^ 0x1021 : crc << 1;
+      crc &= 0xffff;
+    }
+  }
+  return crc.toString(16).toUpperCase().padStart(4, "0");
+}
+
+function convertMinimal(staticStr, amount) {
+  let body = staticStr.trim().slice(0, -8);
+  body = body.replace("010211", "010212");
+  body = body.replace(/54\d{2}\d+(?=5[5-9]|6[0-9]|8[0-9])/, "");
+  const amtStr = String(amount);
+  const tag54 = "54" + String(amtStr.length).padStart(2, "0") + amtStr;
+  body = body.includes("5802ID")
+    ? body.replace("5802ID", tag54 + "5802ID")
+    : body + tag54;
+  const w = body + "6304";
+  return w + crc16(w);
+}
+
+// ════════════════════════════
+// 🔥 PAYMENT API (untuk developer external)
+// ════════════════════════════
+
+const PAYMENT_API_KEY = process.env.PAYMENT_API_KEY || "";
+
+// API Key middleware
+function apiKeyMiddleware(req, res, next) {
+  const key = req.headers["x-api-key"];
+  if (!PAYMENT_API_KEY) {
+    return res.status(403).json({ error: "PAYMENT_API_KEY belum di-set di .env" });
+  }
+  if (key !== PAYMENT_API_KEY) {
+    return res.status(401).json({ error: "API Key tidak valid" });
+  }
+  next();
+}
+
+/**
+ * POST /api/payment-link
+ * Header: x-api-key: <PAYMENT_API_KEY>
+ * Body: { qris: "000201...", name: "Indomie", price: 15000, kode_unik_digits: 3 }
+ *
+ * Response: { qris_string, amount, kode_unik, payment_url }
+ */
+app.post("/api/payment-link", apiKeyMiddleware, async (req, res) => {
+  try {
+    const { qris, name, price, kode_unik_digits } = req.body;
+
+    // Validasi
+    if (!qris || !qris.startsWith("000201")) {
+      return res.status(400).json({ error: "QRIS string tidak valid (harus mulai 000201)" });
+    }
+    if (typeof name !== "string" || name.length > 100) {
+      return res.status(400).json({ error: "Nama produk tidak valid (max 100 karakter)" });
+    }
+    if (typeof price !== "number" || price < 100 || price > 100000000) {
+      return res.status(400).json({ error: "Harga tidak valid (100 - 100.000.000)" });
+    }
+
+    // Generate kode unik
+    const digits = (typeof kode_unik_digits === "number" && kode_unik_digits >= 1 && kode_unik_digits <= 3)
+      ? kode_unik_digits
+      : 3;
+    const max = Math.pow(10, digits) - 1;
+    const kodeUnik = Math.floor(Math.random() * max) + 1;
+
+    const totalAmount = price + kodeUnik;
+
+    // Generate QRIS dinamis
+    const qrisString = convertMinimal(qris, totalAmount);
+
+    // Payment URL (halaman pembayaran)
+    const payload = Buffer.from(JSON.stringify({
+      qris: qrisString,
+      name: name,
+      price: totalAmount,
+      kode_unik: kodeUnik,
+    })).toString("base64");
+
+    const paymentUrl = `${req.protocol}://${req.get("host")}/pay?d=${encodeURIComponent(payload)}`;
+
+    res.json({
+      success: true,
+      data: {
+        qris_string: qrisString,
+        amount: totalAmount,
+        base_price: price,
+        kode_unik: kodeUnik,
+        product: name,
+        payment_url: paymentUrl,
+      },
+    });
+  } catch (err) {
+    console.error("[PAYMENT-LINK] Error:", err.message);
+    res.status(500).json({ error: "Gagal generate QRIS" });
+  }
+});
+
+/**
+ * GET /pay — Halaman pembayaran publik
+ * URL: /pay?d=<base64 data>
+ * Digunakan oleh dev external untuk redirect pembayaran
+ */
+app.get("/pay", (req, res) => {
+  const data = req.query.d || "";
+  if (!data) {
+    return res.status(400).send(`
+      <html><body style="font-family:sans-serif;text-align:center;padding:40px">
+        <h2>❌ Link Tidak Valid</h2>
+        <p>Parameter pembayaran tidak ditemukan.</p>
+        <p style="font-size:12px;color:#888">
+          Gunakan POST /api/payment-link untuk mendapatkan link yang valid.
+        </p>
+      </body></html>
+    `);
+  }
+  // Render payment page using SPA
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
+// ════════════════════════════
 // 🔥 SERVE STATIC (SPA)
 // ════════════════════════════
 // Hanya serve index.html, semua file lain di blokir di atas

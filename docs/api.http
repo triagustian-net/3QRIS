@@ -1,0 +1,139 @@
+# ═══════════════════════════════════════
+# 3QRIS API Documentation
+# Bisa langsung di-run pake VS Code REST Client
+# ═══════════════════════════════════════
+# Install: https://marketplace.visualstudio.com/items?itemName=humao.rest-client
+
+### ─────────────────────────────────────
+### 🔧 SETTINGS — Ganti sesuai server kamu
+### ─────────────────────────────────────
+
+### Ganti base URL sesuai server 3QRIS kamu
+@baseUrl = http://localhost:5001
+
+### Ganti API Key — set di .env PAYMENT_API_KEY
+@apiKey = your-payment-api-key-here
+
+### ─────────────────────────────────────
+### 🏥 HEALTH CHECK
+### ─────────────────────────────────────
+
+### Cek status API
+GET {{baseUrl}}/api
+
+### ─────────────────────────────────────
+### 🔐 AUTH
+### ─────────────────────────────────────
+
+### Register akun baru
+POST {{baseUrl}}/api/register
+Content-Type: application/json
+
+{
+  "username": "demo",
+  "password": "demo123"
+}
+
+### Login
+# @name login
+POST {{baseUrl}}/api/login
+Content-Type: application/json
+
+{
+  "username": "demo",
+  "password": "demo123"
+}
+
+### Simpan token untuk request selanjutnya
+# (REST Client auto-save variable dari response)
+@token = {{login.response.body.token}}
+
+### Verifikasi token
+GET {{baseUrl}}/api/me
+Authorization: Bearer {{token}}
+
+### ─────────────────────────────────────
+### 💳 PAYMENT API (External Developer)
+### ─────────────────────────────────────
+
+### Generate QRIS dinamis + payment link
+POST {{baseUrl}}/api/payment-link
+x-api-key: {{apiKey}}
+Content-Type: application/json
+
+{
+  "qris": "00020101021126680012ID.CO.BANKMANDIRI.WWW0118936006726031031000102235004216002610ID.CO.BANKMANDIRI...5802ID5913TOKO MAJU JAYA6007JAKARTA61051234562070703...6304",
+  "name": "Indomie Goreng + Telur",
+  "price": 15000,
+  "kode_unik_digits": 3
+}
+
+### Response:
+# {
+#   "success": true,
+#   "data": {
+#     "qris_string": "000201010212...",
+#     "amount": 15123,
+#     "base_price": 15000,
+#     "kode_unik": 123,
+#     "product": "Indomie Goreng + Telur",
+#     "payment_url": "https://serverkamu/pay?d=eyJx..."
+#   }
+# }
+
+### ─────────────────────────────────────
+### 🛒 CONFIG (Butuh Login)
+### ─────────────────────────────────────
+
+### Simpan config QRIS & produk
+POST {{baseUrl}}/api/save
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "qrisString": "000201010211...",
+  "products": [
+    { "name": "Voucher 1 Hari", "price": 6500 },
+    { "name": "Voucher 7 Hari", "price": 35000 },
+    { "name": "Indomie", "price": 15000 }
+  ]
+}
+
+### Load config
+GET {{baseUrl}}/api/load
+Authorization: Bearer {{token}}
+
+### ─────────────────────────────────────
+### 📋 TRANSACTIONS (Butuh Login)
+### ─────────────────────────────────────
+
+### Simpan transaksi
+POST {{baseUrl}}/api/transaction
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Indomie Goreng",
+  "price": 15000,
+  "time": "07:45"
+}
+
+### Riwayat transaksi
+GET {{baseUrl}}/api/transactions
+Authorization: Bearer {{token}}
+
+### ─────────────────────────────────────
+### 👑 ADMIN (Admin Only)
+### ─────────────────────────────────────
+
+### Statistik dashboard
+GET {{baseUrl}}/api/admin/stats
+Authorization: Bearer {{token}}
+
+### Daftar user
+GET {{baseUrl}}/api/admin/users
+Authorization: Bearer {{token}}
+
+### Semua transaksi
+GET {{baseUrl}}/api/admin/transactions
+Authorization: Bearer {{token}}

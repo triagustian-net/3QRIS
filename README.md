@@ -95,6 +95,7 @@ npm install
 # 3. Copy & edit env
 cp .env.example .env
 # ganti JWT_SECRET dengan random string minimal 32 karakter
+# (opsional) PAYMENT_API_KEY — untuk integrasi QRIS ke website external
 
 # 4. Jalankan
 node server.js
@@ -126,6 +127,79 @@ export TRUST_PROXY=true   # jika di belakang reverse proxy (Nginx/Cloudflare)
 
 node server.js
 ```
+
+---
+
+## 🔌 Integrasi QRIS ke Website External
+
+Developer bisa pake 3QRIS di website mereka **tanpa perlu clone/setup full aplikasi**.
+
+### Level 1 — Link Pembayaran (paling gampang)
+
+Cocok untuk: toko online, landing page, WhatsApp order.
+
+```javascript
+// Panggil API → dapet payment link → redirect customer
+const res = await fetch("https://server-3qris-kamu.com/api/payment-link", {
+  method: "POST",
+  headers: {
+    "x-api-key": "PAYMENT_API_KEY_MU",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    qris: "000201010211...",      // QRIS statis kamu
+    name: "Indomie Goreng",       // nama produk
+    price: 15000,                 // harga (tanpa kode unik)
+    kode_unik_digits: 3           // 1, 2, atau 3 digit
+  })
+});
+
+const data = await res.json();
+// data.data.payment_url → redirect customer ke halaman bayar
+// data.data.qris_string → raw QRIS (generate QR sendiri)
+// data.data.amount     → total termasuk kode unik
+```
+
+### Level 2 — Tampilkan QR di Website Sendiri
+
+Gak perlu redirect — QR ditampilkan langsung di halaman kamu.
+
+```javascript
+async function tampilkanQR(nama, harga) {
+  const res = await fetch("https://server-3qris-kamu.com/api/payment-link", {
+    method: "POST",
+    headers: {
+      "x-api-key": "API_KEY_MU",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ qris: QRIS_STATIC, name: nama, price: harga })
+  });
+  const data = await res.json();
+
+  // Generate QR dari qris_string (pake library QRCode.js)
+  new QRCode(document.getElementById("qrBox"), {
+    text: data.data.qris_string,
+    width: 200,
+    height: 200
+  });
+
+  // Tampilkan nominal
+  document.getElementById("total").textContent =
+    "Rp " + data.data.amount.toLocaleString("id-ID");
+}
+```
+
+### Setup API Key
+
+Di server 3QRIS kamu, set `.env`:
+
+```bash
+PAYMENT_API_KEY=buat-random-key-susah-ditebak
+```
+
+Kasih key itu ke developer yang mau integrasi QRIS ke website mereka.
+
+> **Contoh request lengkap** ada di [docs/api.http](docs/api.http). Bisa di-run langsung dari VS Code.
 
 ---
 
@@ -168,6 +242,8 @@ node server.js
 ├── index.html          # Frontend SPA — semua UI di 1 file HTML
 ├── public/
 │   └── app.js          # Frontend JS — logic auth, kasir, admin panel
+├── docs/
+│   └── api.http        # API docs — bisa jalan di VS Code REST Client
 ├── package.json
 ├── .env.example        # Template konfigurasi environment
 ├── .gitignore
@@ -209,8 +285,45 @@ node server.js
 
 > **Auth Header** semua endpoint protected:
 > ```
-> Authorization: Bearer <your-jwt-token>
+> Authorization: Bearer ***
 > ```
+
+### 💳 Payment API (API Key Required)
+
+Endpoint publik untuk **developer external** yang mau integrasi QRIS ke website mereka.
+
+| Method | Endpoint | Deskripsi |
+|--------|----------|-----------|
+| `POST` | `/api/payment-link` | Generate QRIS dinamis + payment link |
+
+**Header:** `x-api-key: <PAYMENT_API_KEY>` (set di .env)
+
+**Request:**
+```json
+{
+  "qris": "000201010211...",
+  "name": "Indomie Goreng",
+  "price": 15000,
+  "kode_unik_digits": 3
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "qris_string": "000201010212...",
+    "amount": 15123,
+    "base_price": 15000,
+    "kode_unik": 123,
+    "product": "Indomie Goreng",
+    "payment_url": "https://serverkamu/pay?d=eyJx..."
+  }
+}
+```
+
+> **Lihat [docs/api.http](docs/api.http)** untuk contoh request lengkap yang bisa di-run langsung di VS Code pakai REST Client.
 
 ---
 

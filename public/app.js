@@ -1303,7 +1303,15 @@
   function init() {
     cacheEls();
 
-    // Hash-based routing
+    // Query param payment page (/pay?d=...)
+    const urlParams = new URLSearchParams(window.location.search);
+    const payData = urlParams.get("d");
+    if (payData) {
+      showPaymentPage(payData);
+      return;
+    }
+
+    // Hash-based routing (#pay=...)
     if (window.location.hash.startsWith("#pay=")) {
       showPaymentPage(window.location.hash.slice(5));
       return;
