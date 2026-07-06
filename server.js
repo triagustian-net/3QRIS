@@ -584,6 +584,15 @@ function apiKeyMiddleware(req, res, next) {
  * Response: { qris_string, amount, kode_unik, payment_url }
  */
 app.post("/api/payment-link", apiKeyMiddleware, async (req, res) => {
+  // CORS — izinin AJAX dari domain manapun (biar bisa di-embed)
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, x-api-key");
+
+  // Handle preflight (OPTIONS)
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
+  }
   try {
     const { qris, name, price, kode_unik_digits } = req.body;
 
