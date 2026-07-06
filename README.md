@@ -46,6 +46,7 @@ Cocok untuk **warung, UMKM, toko kecil, atau siapa pun** yang mau menerima pemba
 - **📷 Scan QRIS Statis** — Upload gambar QRIS, auto-scan pakai jsQR di browser
 - **📝 Paste Manual** — Atau paste raw string QRIS (mulai `000201...`)
 - **⚡ 1 Klik Generate QR** — Tap produk → QRIS dinamis dengan nominal muncul
+- **🔢 Kode Unik (1-3 digit)** — Tambah kode unik otomatis tiap transaksi (pilihan: 1-9 / 1-99 / 1-999) hindari bentrok nominal pas ngecek mutasi
 - **💰 Fee Layanan** — Tambah biaya layanan ke customer (Rp 500 – Custom)
 - **🔗 Link Pembayaran** — Copy link untuk WA atau embed di website toko
 - **🔍 Cari Produk** — Filter cepat dari daftar produk
